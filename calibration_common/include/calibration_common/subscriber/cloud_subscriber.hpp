@@ -39,6 +39,7 @@ public:
   };
   CloudSubscriber(rclcpp::Node::SharedPtr node, std::string topic_name, size_t buffer_size)
   {
+    node_ = node;
     buffer_size_ = buffer_size;
     auto msg_callback = [this](const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
         MsgData data;

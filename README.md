@@ -48,7 +48,7 @@ sensor2sensor外参标定
 
 - [ ] 实现手动lidar2lidar外参标定: `lidar_lidar_manual_calibration`
 - [ ] 实现基于ICP的自动lidar2lidar外参标定: `lidar_lidar_calibration`
-- [ ] 实现手动lidar2camera外参标定: `lidar_camera_manual_calibration`
+- [x] 实现手动lidar2camera外参标定: `lidar_camera_manual_calibration`
 
 
 ## Acknowledgement
