@@ -1,0 +1,4 @@
+lidar_projector:
+    use_intensity_color: false
+    point_size: 3
+
