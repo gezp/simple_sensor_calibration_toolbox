@@ -1,7 +1,5 @@
 calibrator_type: pinhole_calibrator
 pinhole_calibrator:
-    image_width: 1920
-    image_hight: 1200
     min_valid_image: 15
     pattern_detector:
       pattern_type: chessboard

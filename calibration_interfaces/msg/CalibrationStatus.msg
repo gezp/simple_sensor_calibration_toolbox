@@ -17,15 +17,16 @@ string command_topic
 # state type
 uint8 UNKNOWN = 0
 uint8 READY = 1
-uint8 COLLECTING = 2
-uint8 OPTIMIZING = 3
-uint8 DONE = 4
+uint8 CALIBRATING = 2
+uint8 PAUSED = 3
+uint8 SUCCESSED = 4
+uint8 FAILED = 5
 
 # calibration state
 uint8 state 0
 
-# calibration result
-bool success false
+# calibration progress
+uint8 progress 0
 
 # calibration info
 string info

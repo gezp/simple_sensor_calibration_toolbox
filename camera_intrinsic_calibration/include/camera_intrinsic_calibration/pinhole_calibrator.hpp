@@ -36,9 +36,10 @@ public:
   bool optimize();
   void clear();
   // get result
-  std::string get_camera_model_type();
+  std::string get_type();
   std::vector<double> get_intrinsics();
   std::vector<double> get_distortion_coeffs();
+  cv::Size get_image_size();
   const std::string & get_status_message();
   cv::Mat get_debug_image();
 
@@ -55,6 +56,7 @@ private:
   //
   int total_img_num_{0};
   int valid_img_num_{0};
+  int min_valid_image_{15};
   // calibration result
   bool calibreted_{false};
   cv::Mat camera_intrinsic_;

@@ -49,24 +49,21 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
     return;
   }
   // read calibration data
-  auto calibration_data = std::make_shared<calibration_common::CalibrationData>();
-  calibration_data->load(initial_calibration_file_);
-  calibration_data->get_extrinsic_data(camera_frame_id_, lidar_frame_id_, T_camera_lidar_);
-  std::string camera_model_type;
-  std::vector<double> intrinsics;
-  std::vector<double> distortion_coeffs;
-  calibration_data->get_camera_intrinsic_data(
-    camera_frame_id_, camera_model_type, intrinsics, distortion_coeffs);
-  if (intrinsics.size() != 4) {
+  auto calibration_params = std::make_shared<calibration_common::CalibrationParams>();
+  calibration_params->load(initial_calibration_file_);
+  calibration_params->get_extrinsic_param(camera_frame_id_, lidar_frame_id_, T_camera_lidar_);
+  calibration_common::CameraIntrinsicParam param;
+  calibration_params->get_camera_intrinsic_param(camera_frame_id_, param);
+  if (param.intrinsics.size() != 4) {
     RCLCPP_FATAL(node_->get_logger(), "camera intrinsic in calibration file is invalid");
     return;
   }
-  camera_intrinsic_ = intrinsics;
+  camera_intrinsic_ = param.intrinsics;
   // lidar projector
   YAML::Node config_node = YAML::LoadFile(calibrator_config);
   lidar_projector_ = std::make_shared<LidarProjector>(config_node["lidar_projector"]);
   std::string topic_name_prefix =
-    "/calibration/lidar_camera_manual_calibration/" + camera_frame_id_ + "/" + lidar_frame_id_;
+    "/calibration/lidar_camera_manual_calibration/" + camera_frame_id_ + "_tf_" + lidar_frame_id_;
   // pub&sub
   pointcloud_sub_ =
     std::make_shared<calibration_common::CloudSubscriber<pcl::PointXYZI>>(node_, "pointcloud", 100);
@@ -95,7 +92,7 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
   status_msg_.calibration_type = "lidar_camera_manual_calibration";
   status_msg_.command_topic = command_topic;
   state_ = calibration_interfaces::msg::CalibrationStatus::READY;
-  update_status_msg(state_, "ready to start.");
+  update_status_msg(state_, "ready to start.", 0);
   // status timer
   using namespace std::chrono_literals;
   timer_ = node_->create_wall_timer(
@@ -196,9 +193,10 @@ void CalibrationNode::clear_data()
   pointcloud_sub_->clear();
   image_sub_->clear();
   image_buffer_.clear();
+  current_sensor_data_.time = -1;
 }
 
-bool CalibrationNode::update_calibration_data(const std::string & key, float value)
+bool CalibrationNode::update_calibration_params(const std::string & key, float value)
 {
   if (key == "x") {
     T_camera_lidar_(0, 3) += value;
@@ -228,21 +226,17 @@ void CalibrationNode::process_command(const calibration_interfaces::msg::Calibra
 {
   if (msg.command == calibration_interfaces::msg::CalibrationCommand::RESET) {
     state_ = calibration_interfaces::msg::CalibrationStatus::READY;
-    update_status_msg(state_, "ready to start.");
+    update_status_msg(state_, "ready to start.", 0);
   } else if (msg.command == calibration_interfaces::msg::CalibrationCommand::START) {
-    state_ = calibration_interfaces::msg::CalibrationStatus::DONE;
+    state_ = calibration_interfaces::msg::CalibrationStatus::CALIBRATING;
     clear_data();
-    update_status_msg(state_, "ready to project lidar pointcloud.");
-  } else if (msg.command == calibration_interfaces::msg::CalibrationCommand::SAVE_RESULT) {
+    update_status_msg(state_, "start to calibrate.", 1);
+  } else if (msg.command == calibration_interfaces::msg::CalibrationCommand::SAVE) {
     save_result();
-  } else if (msg.command == calibration_interfaces::msg::CalibrationCommand::COLLECT_ONCE) {
-    clear_data();
-    state_ = calibration_interfaces::msg::CalibrationStatus::COLLECTING;
-    update_status_msg(state_, "ready to collect one lidar pointcloud.");
   } else if (msg.command == calibration_interfaces::msg::CalibrationCommand::CUSTOM_KEY_VAULE) {
     // update calibration data
-    if (update_calibration_data(msg.key, msg.value)) {
-      need_optimize_once_ = true;
+    if (update_calibration_params(msg.key, msg.value)) {
+      state_ = calibration_interfaces::msg::CalibrationStatus::CALIBRATING;
     } else {
       RCLCPP_FATAL(node_->get_logger(), "undefined custom key value command: %s", msg.key.c_str());
     }
@@ -251,12 +245,13 @@ void CalibrationNode::process_command(const calibration_interfaces::msg::Calibra
   }
 }
 
-void CalibrationNode::update_status_msg(uint8_t state, const std::string & info)
+void CalibrationNode::update_status_msg(uint8_t state, const std::string & info, uint8_t progress)
 {
   std::lock_guard<std::mutex> lock(status_mutex_);
   status_msg_.timestamp = node_->get_clock()->now();
   status_msg_.state = state;
   status_msg_.info = info;
+  status_msg_.progress = progress;
 }
 
 void CalibrationNode::save_result()
@@ -266,17 +261,17 @@ void CalibrationNode::save_result()
     return;
   }
   //
-  auto calibration_data = std::make_shared<calibration_common::CalibrationData>();
+  auto calibration_params = std::make_shared<calibration_common::CalibrationParams>();
   if (std::filesystem::exists(output_calibration_file_)) {
-    if (!calibration_data->load(output_calibration_file_)) {
+    if (!calibration_params->load(output_calibration_file_)) {
       RCLCPP_FATAL(
         node_->get_logger(), "failed to load existed calibration data, %s",
-        calibration_data->error_message().c_str());
+        calibration_params->error_message().c_str());
       return;
     }
   }
-  calibration_data->add_extrinsic_data(camera_frame_id_, lidar_frame_id_, T_camera_lidar_);
-  if (calibration_data->save(output_calibration_file_)) {
+  calibration_params->add_extrinsic_param(camera_frame_id_, lidar_frame_id_, T_camera_lidar_);
+  if (calibration_params->save(output_calibration_file_)) {
     RCLCPP_INFO(
       node_->get_logger(), "successed to save result: %s", output_calibration_file_.c_str());
   } else {
@@ -296,40 +291,25 @@ bool CalibrationNode::run()
     }
   }
   // calibration flow
-  if (state_ == calibration_interfaces::msg::CalibrationStatus::COLLECTING) {
-    if (!read_data()) {
-      return false;
-    }
-    state_ = calibration_interfaces::msg::CalibrationStatus::OPTIMIZING;
-    need_optimize_once_ = true;
-    update_status_msg(state_, "ready to project one lidar pointcloud.");
-  } else if (state_ == calibration_interfaces::msg::CalibrationStatus::OPTIMIZING) {
-    if (need_optimize_once_ && current_sensor_data_.time >= 0) {
+  if (state_ == calibration_interfaces::msg::CalibrationStatus::CALIBRATING) {
+    if (current_sensor_data_.time < 0) {
+      if (!read_data()) {
+        return false;
+      }
+      update_status_msg(state_, "finished to collect data.", 50);
+    } else {
       // project pointcloud
       cv::Mat img = current_sensor_data_.image.clone();
-      if (lidar_projector_->project(
-          *current_sensor_data_.pointcloud, camera_intrinsic_, T_camera_lidar_, img))
-      {
-        debug_image_pub_->publish(img, current_sensor_data_.time);
-        std::stringstream ss;
-        ss << T_camera_lidar_;
-        update_status_msg(state_, "project one lidar frame:\n" + ss.str());
+      auto ok = lidar_projector_->project(
+        *current_sensor_data_.pointcloud, camera_intrinsic_, T_camera_lidar_, img);
+      debug_image_pub_->publish(img, current_sensor_data_.time);
+      if (ok) {
+        state_ = calibration_interfaces::msg::CalibrationStatus::SUCCESSED;
+      } else {
+        state_ = calibration_interfaces::msg::CalibrationStatus::FAILED;
       }
-      need_optimize_once_ = false;
+      update_status_msg(state_, "finished to project pointcloud.", 100);
     }
-  } else if (state_ == calibration_interfaces::msg::CalibrationStatus::DONE) {
-    if (!read_data()) {
-      return false;
-    }
-    cv::Mat img = current_sensor_data_.image.clone();
-    if (!lidar_projector_->project(
-        *current_sensor_data_.pointcloud, camera_intrinsic_, T_camera_lidar_, img))
-    {
-      RCLCPP_WARN(node_->get_logger(), "failed to project");
-    }
-    debug_image_pub_->publish(img, current_sensor_data_.time);
-    // project pointcloud
-    update_status_msg(state_, "project lidar pointcloud.");
   } else {
     return false;
   }

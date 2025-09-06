@@ -1,10 +1,12 @@
 cameras:
     camera1:
         frame_id: center_camera
-        camera_model_type: pinhole_radtan
+        height: 1200
+        width: 1920
+        type: pinhole_radtan
         intrinsics: [2109.75, 2071.72, 949.828, 576.237]
         distortion_coeffs: [-0.108144, 0.138668, -0.003797, -0.004841, 0.0]
-sensor_pair_transforms:
+transforms:
     transform1:
         frame_id: center_camera
         child_frame_id: top_center_lidar

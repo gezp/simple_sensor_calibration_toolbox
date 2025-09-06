@@ -11,10 +11,12 @@
 cameras:
     camera1:
         frame_id: camera1
-        camera_model_type: pinhole_radtan
-        intrinsics: [461.629, 460.152, 362.680, 246.049]
-        distortion_coeffs: [-0.27695497, 0.06712482, 0.00087538, 0.00011556, 0.0]
-sensor_pair_transforms:
+        height: 1200
+        width: 1920
+        type: pinhole_radtan
+        intrinsics: [1057.79, 1059.8, 962.78, 581.29]
+        distortion_coeffs: [-0.149116, 0.09615, -0.000526577, -0.000567049, -0.022971]
+transforms:
     transform1:
         frame_id: camera1
         child_frame_id: lidar1
@@ -45,7 +47,7 @@ sensor_pair_transforms:
 
 相机内参包括以下三个量
 
-* camera_model_type：采用的相机模型类型，为一个字符串
+* type：采用的相机模型类型，为一个字符串
 * intrinsics：相机内参系数，为一个float数组
 * distortion_coeffs：畸变参数系数，为一个float数组
 

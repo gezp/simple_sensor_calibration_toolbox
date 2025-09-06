@@ -16,6 +16,7 @@
 import rclpy
 import sys
 import threading
+
 from PySide6.QtWidgets import (
     QApplication,
     QWidget,
@@ -117,19 +118,9 @@ class CalibrationClient(QWidget):
         self.btn_commands.append(btn_command_reset)
         btn_command_save_result = QPushButton("save result")
         btn_command_save_result.clicked.connect(
-            lambda: self.send_command(CalibrationCommand.SAVE_RESULT)
+            lambda: self.send_command(CalibrationCommand.SAVE)
         )
         self.btn_commands.append(btn_command_save_result)
-        btn_command_collect_once = QPushButton("collect once")
-        btn_command_collect_once.clicked.connect(
-            lambda: self.send_command(CalibrationCommand.COLLECT_ONCE)
-        )
-        self.btn_commands.append(btn_command_collect_once)
-        btn_command_optimize_once = QPushButton("optimize once")
-        btn_command_optimize_once.clicked.connect(
-            lambda: self.send_command(CalibrationCommand.OPTIMIZE_ONCE)
-        )
-        self.btn_commands.append(btn_command_optimize_once)
         layout_command = QHBoxLayout()
         for btn in self.btn_commands:
             layout_command.addWidget(btn)
@@ -219,15 +210,12 @@ class CalibrationClient(QWidget):
             self.label_calibration_status.setText("unknown")
         elif msg.state == CalibrationStatus.READY:
             self.label_calibration_status.setText("ready")
-        elif msg.state == CalibrationStatus.COLLECTING:
-            self.label_calibration_status.setText("collecting")
-        elif msg.state == CalibrationStatus.OPTIMIZING:
-            self.label_calibration_status.setText("optimizing")
-        elif msg.state == CalibrationStatus.DONE:
-            if msg.success:
-                self.label_calibration_status.setText("done[successed]")
-            else:
-                self.label_calibration_status.setText("done[failed]")
+        elif msg.state == CalibrationStatus.CALIBRATING:
+            self.label_calibration_status.setText("calibrating")
+        elif msg.state == CalibrationStatus.SUCCESSED:
+            self.label_calibration_status.setText("done[successed]")
+        elif msg.state == CalibrationStatus.FAILED:
+            self.label_calibration_status.setText("done[failed]")
         else:
             self.label_calibration_status.setText("undefined")
 

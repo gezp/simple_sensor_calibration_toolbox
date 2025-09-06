@@ -123,7 +123,7 @@ class CalibrationClient(QWidget):
         # commnad layout
         self.btn_commands = []
         layout.addWidget(QLabel("calibration command:"))
-        self.basic_cmds = ["start", "reset", "save result", "collect once"]
+        self.basic_cmds = ["start", "reset", "save result"]
         layout.addLayout(self.create_command_layout(self.basic_cmds))
         # translation
         layout_command_translation_step = QHBoxLayout()
@@ -238,7 +238,7 @@ class CalibrationClient(QWidget):
         debug_topic = (
             "/calibration/lidar_camera_manual_calibration/"
             + msg.frame_id
-            + "/"
+            + "_tf_"
             + msg.child_frame_id
             + "/debug_image"
         )
@@ -265,10 +265,8 @@ class CalibrationClient(QWidget):
             msg.command = CalibrationCommand.START
         elif cmd == "reset":
             msg.command = CalibrationCommand.RESET
-        elif cmd == "collect once":
-            msg.command = CalibrationCommand.COLLECT_ONCE
         elif cmd == "save result":
-            msg.command = CalibrationCommand.SAVE_RESULT
+            msg.command = CalibrationCommand.SAVE
         elif cmd in self.translation_cmds:
             msg.command = CalibrationCommand.CUSTOM_KEY_VAULE
             msg.key = cmd[1:]
@@ -294,15 +292,12 @@ class CalibrationClient(QWidget):
             self.label_calibration_status.setText("unknown")
         elif msg.state == CalibrationStatus.READY:
             self.label_calibration_status.setText("ready")
-        elif msg.state == CalibrationStatus.COLLECTING:
-            self.label_calibration_status.setText("collecting")
-        elif msg.state == CalibrationStatus.OPTIMIZING:
-            self.label_calibration_status.setText("optimizing")
-        elif msg.state == CalibrationStatus.DONE:
-            if msg.success:
-                self.label_calibration_status.setText("done[successed]")
-            else:
-                self.label_calibration_status.setText("done[failed]")
+        elif msg.state == CalibrationStatus.CALIBRATING:
+            self.label_calibration_status.setText("calibrating")
+        elif msg.state == CalibrationStatus.SUCCESSED:
+            self.label_calibration_status.setText("done[successed]")
+        elif msg.state == CalibrationStatus.FAILED:
+            self.label_calibration_status.setText("done[failed]")
         else:
             self.label_calibration_status.setText("undefined")
 

@@ -19,25 +19,31 @@ namespace camera_intrinsic_calibration
 
 PinholeCalibrator::PinholeCalibrator(const YAML::Node & config)
 {
+  min_valid_image_ = config["min_valid_image"].as<int>();
   int corner_cols = config["pattern_detector"]["chessboard"]["cols"].as<int>();
   int corner_rows = config["pattern_detector"]["chessboard"]["rows"].as<int>();
   corner_size_ = cv::Size(corner_cols, corner_rows);
   float grid_size = config["pattern_detector"]["chessboard"]["size"].as<float>();
   // generate 3D corner points
-  for (int i = 0; i < corner_cols; i++) {
-    for (int j = 0; j < corner_rows; j++) {
-      pattern_points_.push_back(cv::Point3f(i * grid_size, j * grid_size, 0.0f));
+  for (int i = 0; i < corner_rows; i++) {
+    for (int j = 0; j < corner_cols; j++) {
+      pattern_points_.push_back(cv::Point3f(j * grid_size, i * grid_size, 0.0f));
     }
   }
-  //
-  int image_width = config["image_width"].as<int>();
-  int image_height = config["image_hight"].as<int>();
-  image_size_ = cv::Size(image_width, image_height);
+  image_size_ = cv::Size(0, 0);
 }
 
 bool PinholeCalibrator::process_image(const cv::Mat & image)
 {
   total_img_num_++;
+  if (image_size_ == cv::Size(0, 0)) {
+    image_size_ = image.size();
+  }
+  if (image.size() != image_size_) {
+    status_message_ =
+      "[collect data] invalid image size, total image:" + std::to_string(total_img_num_);
+    return false;
+  }
   cv::Mat gray_image;
   cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
   std::vector<cv::Point2f> image_corners;
@@ -66,15 +72,13 @@ bool PinholeCalibrator::process_image(const cv::Mat & image)
 
 bool PinholeCalibrator::ready_to_optimize()
 {
-  return valid_img_num_ >= 15;
+  return valid_img_num_ >= min_valid_image_;
 }
 
 bool PinholeCalibrator::optimize()
 {
-  // check min valid num of images
-  if (valid_img_num_ < 10) {
-    status_message_ =
-      "[optimize] failed to optimize, image num at least 10, but:" + std::to_string(valid_img_num_);
+  if (image_points_.empty()) {
+    status_message_ = "[optimize] failed to optimize, no image points.";
     return false;
   }
   double rms = cv::calibrateCamera(
@@ -92,11 +96,12 @@ void PinholeCalibrator::clear()
   valid_img_num_ = 0;
   image_points_.clear();
   object_points_.clear();
+  image_size_ = cv::Size(0, 0);
   calibreted_ = false;
   status_message_ = "";
 }
 
-std::string PinholeCalibrator::get_camera_model_type()
+std::string PinholeCalibrator::get_type()
 {
   return "pinhole_radtan";
 }
@@ -111,6 +116,7 @@ std::vector<double> PinholeCalibrator::get_intrinsics()
       camera_intrinsic_.at<double>(0, 2), camera_intrinsic_.at<double>(1, 2)};
   }
 }
+
 std::vector<double> PinholeCalibrator::get_distortion_coeffs()
 {
   if (!calibreted_) {
@@ -122,6 +128,12 @@ std::vector<double> PinholeCalibrator::get_distortion_coeffs()
       camera_distortion_.at<double>(0, 4)};
   }
 }
+
+cv::Size PinholeCalibrator::get_image_size()
+{
+  return image_size_;
+}
+
 const std::string & PinholeCalibrator::get_status_message()
 {
   return status_message_;
