@@ -36,7 +36,7 @@ public:
   bool optimize();
   void clear();
   // get result
-  std::string get_camera_model_type();
+  std::string get_type();
   std::vector<double> get_intrinsics();
   std::vector<double> get_distortion_coeffs();
   const std::string & get_status_message();

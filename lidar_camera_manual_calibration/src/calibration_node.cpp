@@ -49,14 +49,14 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
     return;
   }
   // read calibration data
-  auto calibration_data = std::make_shared<calibration_common::CalibrationData>();
-  calibration_data->load(initial_calibration_file_);
-  calibration_data->get_extrinsic_data(camera_frame_id_, lidar_frame_id_, T_camera_lidar_);
-  std::string camera_model_type;
+  auto calibration_params = std::make_shared<calibration_common::CalibrationParams>();
+  calibration_params->load(initial_calibration_file_);
+  calibration_params->get_extrinsic_param(camera_frame_id_, lidar_frame_id_, T_camera_lidar_);
+  std::string type;
   std::vector<double> intrinsics;
   std::vector<double> distortion_coeffs;
-  calibration_data->get_camera_intrinsic_data(
-    camera_frame_id_, camera_model_type, intrinsics, distortion_coeffs);
+  calibration_params->get_camera_intrinsic_param(
+    camera_frame_id_, type, intrinsics, distortion_coeffs);
   if (intrinsics.size() != 4) {
     RCLCPP_FATAL(node_->get_logger(), "camera intrinsic in calibration file is invalid");
     return;
@@ -198,7 +198,7 @@ void CalibrationNode::clear_data()
   image_buffer_.clear();
 }
 
-bool CalibrationNode::update_calibration_data(const std::string & key, float value)
+bool CalibrationNode::update_calibration_params(const std::string & key, float value)
 {
   if (key == "x") {
     T_camera_lidar_(0, 3) += value;
@@ -241,7 +241,7 @@ void CalibrationNode::process_command(const calibration_interfaces::msg::Calibra
     update_status_msg(state_, "ready to collect one lidar pointcloud.");
   } else if (msg.command == calibration_interfaces::msg::CalibrationCommand::CUSTOM_KEY_VAULE) {
     // update calibration data
-    if (update_calibration_data(msg.key, msg.value)) {
+    if (update_calibration_params(msg.key, msg.value)) {
       need_optimize_once_ = true;
     } else {
       RCLCPP_FATAL(node_->get_logger(), "undefined custom key value command: %s", msg.key.c_str());
@@ -266,17 +266,17 @@ void CalibrationNode::save_result()
     return;
   }
   //
-  auto calibration_data = std::make_shared<calibration_common::CalibrationData>();
+  auto calibration_params = std::make_shared<calibration_common::CalibrationParams>();
   if (std::filesystem::exists(output_calibration_file_)) {
-    if (!calibration_data->load(output_calibration_file_)) {
+    if (!calibration_params->load(output_calibration_file_)) {
       RCLCPP_FATAL(
         node_->get_logger(), "failed to load existed calibration data, %s",
-        calibration_data->error_message().c_str());
+        calibration_params->error_message().c_str());
       return;
     }
   }
-  calibration_data->add_extrinsic_data(camera_frame_id_, lidar_frame_id_, T_camera_lidar_);
-  if (calibration_data->save(output_calibration_file_)) {
+  calibration_params->add_extrinsic_param(camera_frame_id_, lidar_frame_id_, T_camera_lidar_);
+  if (calibration_params->save(output_calibration_file_)) {
     RCLCPP_INFO(
       node_->get_logger(), "successed to save result: %s", output_calibration_file_.c_str());
   } else {

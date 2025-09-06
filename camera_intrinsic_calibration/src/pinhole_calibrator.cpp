@@ -96,7 +96,7 @@ void PinholeCalibrator::clear()
   status_message_ = "";
 }
 
-std::string PinholeCalibrator::get_camera_model_type()
+std::string PinholeCalibrator::get_type()
 {
   return "pinhole_radtan";
 }

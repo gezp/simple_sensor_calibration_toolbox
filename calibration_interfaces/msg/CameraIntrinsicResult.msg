@@ -8,8 +8,8 @@ string frame_id
 uint32 height
 uint32 width
 
-# camera_model_type
-string camera_model_type
+# type
+string type
 
 # intrinsics
 float32[] intrinsics

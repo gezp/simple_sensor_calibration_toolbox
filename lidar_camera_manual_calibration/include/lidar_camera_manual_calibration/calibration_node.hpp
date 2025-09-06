@@ -25,7 +25,7 @@
 #include "calibration_common/publisher/image_publisher.hpp"
 #include "calibration_common/subscriber/image_subscriber.hpp"
 #include "calibration_common/subscriber/cloud_subscriber.hpp"
-#include "calibration_common/calibration_data.hpp"
+#include "calibration_common/calibration_params.hpp"
 #include "calibration_interfaces/msg/calibration_status.hpp"
 #include "calibration_interfaces/msg/calibration_command.hpp"
 #include "lidar_camera_manual_calibration/lidar_projector.hpp"
@@ -55,7 +55,7 @@ private:
   bool read_data();
   void clear_data();
   void process_command(const calibration_interfaces::msg::CalibrationCommand & msg);
-  bool update_calibration_data(const std::string & key, float value);
+  bool update_calibration_params(const std::string & key, float value);
   void update_status_msg(uint8_t state, const std::string & info);
   void save_result();
   bool run();
