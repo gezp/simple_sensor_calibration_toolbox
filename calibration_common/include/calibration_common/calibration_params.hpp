@@ -26,13 +26,19 @@ namespace calibration_common
 
 class CalibrationParams
 {
-  struct CameraIntrinsicData
+  struct CameraIntrinsicParam
   {
+    std::string frame_id;
     std::string type;
     std::vector<double> intrinsics;
     std::vector<double> distortion_coeffs;
   };
-  using SensorFrameIdPair = std::pair<std::string, std::string>;
+  struct ExtrinsicParam
+  {
+    std::string frame_id;
+    std::string child_frame_id;
+    Eigen::Matrix4d transform;
+  };
 
 public:
   CalibrationParams() = default;
@@ -59,8 +65,8 @@ public:
   std::string error_message();
 
 private:
-  std::map<std::string, CameraIntrinsicData> camera_intrinsic_param_;
-  std::map<SensorFrameIdPair, Eigen::Matrix4d> extrinsic_param_;
+  std::map<std::string, CameraIntrinsicParam> camera_intrinsic_params_;
+  std::map<std::string, ExtrinsicParam> extrinsic_params_;
   std::string error_message_;
 };
 

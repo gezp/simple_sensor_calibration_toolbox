@@ -40,11 +40,12 @@ bool CalibrationParams::add_camera_intrinsic_param(
   const std::string & frame_id, const std::string & type, const std::vector<double> & intrinsics,
   const std::vector<double> & distortion_coeffs)
 {
-  CameraIntrinsicData data;
-  data.type = type;
-  data.intrinsics = intrinsics;
-  data.distortion_coeffs = distortion_coeffs;
-  camera_intrinsic_param_[frame_id] = data;
+  CameraIntrinsicParam param;
+  param.frame_id = frame_id;
+  param.type = type;
+  param.intrinsics = intrinsics;
+  param.distortion_coeffs = distortion_coeffs;
+  camera_intrinsic_params_[frame_id] = param;
   return true;
 }
 
@@ -52,8 +53,8 @@ bool CalibrationParams::get_camera_intrinsic_param(
   const std::string & frame_id, std::string & type, std::vector<double> & intrinsics,
   std::vector<double> & distortion_coeffs)
 {
-  auto it = camera_intrinsic_param_.find(frame_id);
-  if (it == camera_intrinsic_param_.end()) {
+  auto it = camera_intrinsic_params_.find(frame_id);
+  if (it == camera_intrinsic_params_.end()) {
     return false;
   }
   type = it->second.type;
@@ -64,9 +65,9 @@ bool CalibrationParams::get_camera_intrinsic_param(
 
 void CalibrationParams::remove_camera_intrinsic_param(const std::string & frame_id)
 {
-  auto it = camera_intrinsic_param_.find(frame_id);
-  if (it != camera_intrinsic_param_.end()) {
-    camera_intrinsic_param_.erase(it);
+  auto it = camera_intrinsic_params_.find(frame_id);
+  if (it != camera_intrinsic_params_.end()) {
+    camera_intrinsic_params_.erase(it);
   }
 }
 
@@ -74,30 +75,34 @@ bool CalibrationParams::add_extrinsic_param(
   const std::string & frame_id, const std::string & child_frame_id,
   const Eigen::Matrix4d & transform)
 {
-  auto pair = CalibrationParams::SensorFrameIdPair(frame_id, child_frame_id);
-  extrinsic_param_[pair] = transform.eval();
+  ExtrinsicParam param;
+  param.frame_id = frame_id;
+  param.child_frame_id = child_frame_id;
+  param.transform = transform;
+  std::string key = frame_id + "_tf_" + child_frame_id;
+  extrinsic_params_[key] = param;
   return true;
 }
 
 bool CalibrationParams::get_extrinsic_param(
   const std::string & frame_id, const std::string & child_frame_id, Eigen::Matrix4d & transform)
 {
-  auto pair = CalibrationParams::SensorFrameIdPair(frame_id, child_frame_id);
-  auto it = extrinsic_param_.find(pair);
-  if (it == extrinsic_param_.end()) {
+  std::string key = frame_id + "_tf_" + child_frame_id;
+  auto it = extrinsic_params_.find(key);
+  if (it == extrinsic_params_.end()) {
     return false;
   }
-  transform = it->second;
+  transform = it->second.transform;
   return true;
 }
 
 void CalibrationParams::remove_extrinsic_param(
   const std::string & frame_id, const std::string & child_frame_id)
 {
-  auto pair = CalibrationParams::SensorFrameIdPair(frame_id, child_frame_id);
-  auto it = extrinsic_param_.find(pair);
-  if (it != extrinsic_param_.end()) {
-    extrinsic_param_.erase(it);
+  auto key = frame_id + "_tf_" + child_frame_id;
+  auto it = extrinsic_params_.find(key);
+  if (it != extrinsic_params_.end()) {
+    extrinsic_params_.erase(it);
   }
 }
 
@@ -110,29 +115,29 @@ bool CalibrationParams::save(const std::string & file)
   }
   ofs.setf(std::ios::fixed, std::ios::floatfield);
   ofs.precision(6);
-  if (!camera_intrinsic_param_.empty()) {
+  if (!camera_intrinsic_params_.empty()) {
     ofs << "cameras:" << std::endl;
     int cnt = 1;
-    for (auto & [frame_id, data] : camera_intrinsic_param_) {
+    for (auto & [key, param] : camera_intrinsic_params_) {
       ofs << "    camera" << cnt << ":" << std::endl;
-      ofs << "        frame_id: " << frame_id << std::endl;
-      ofs << "        type: " << data.type << std::endl;
-      ofs << "        intrinsics: " << to_string(data.intrinsics) << std::endl;
-      ofs << "        distortion_coeffs: " << to_string(data.distortion_coeffs) << std::endl;
+      ofs << "        frame_id: " << param.frame_id << std::endl;
+      ofs << "        type: " << param.type << std::endl;
+      ofs << "        intrinsics: " << to_string(param.intrinsics) << std::endl;
+      ofs << "        distortion_coeffs: " << to_string(param.distortion_coeffs) << std::endl;
       cnt++;
     }
   }
-  if (!extrinsic_param_.empty()) {
+  if (!extrinsic_params_.empty()) {
     ofs << "transforms:" << std::endl;
     int cnt = 1;
-    for (auto & [frame_id_pair, transform] : extrinsic_param_) {
-      auto t = transform.block<3, 1>(0, 3);
+    for (auto & [key, param] : extrinsic_params_) {
+      auto t = param.transform.block<3, 1>(0, 3);
       std::vector<double> translation{t.x(), t.y(), t.z()};
-      auto q = Eigen::Quaterniond(transform.block<3, 3>(0, 0));
+      auto q = Eigen::Quaterniond(param.transform.block<3, 3>(0, 0));
       std::vector<double> rotation{q.x(), q.y(), q.z(), q.w()};
       ofs << "    transform" << cnt << ":" << std::endl;
-      ofs << "        frame_id: " << frame_id_pair.first << std::endl;
-      ofs << "        child_frame_id: " << frame_id_pair.second << std::endl;
+      ofs << "        frame_id: " << param.frame_id << std::endl;
+      ofs << "        child_frame_id: " << param.child_frame_id << std::endl;
       ofs << "        translation: " << to_string(translation) << std::endl;
       ofs << "        rotation: " << to_string(rotation) << std::endl;
       cnt++;
@@ -144,8 +149,8 @@ bool CalibrationParams::save(const std::string & file)
 
 bool CalibrationParams::load(const std::string & file)
 {
-  camera_intrinsic_param_.clear();
-  extrinsic_param_.clear();
+  camera_intrinsic_params_.clear();
+  extrinsic_params_.clear();
   YAML::Node config = YAML::LoadFile(file);
   auto cameras = config["cameras"];
   if (cameras.IsDefined() && cameras.IsMap()) {
@@ -171,17 +176,17 @@ bool CalibrationParams::load(const std::string & file)
       std::string key = "unknown";
       try {
         key = it->first.as<std::string>();
-        YAML::Node sensor_pair_transform = it->second;
-        auto frame_id = sensor_pair_transform["frame_id"].as<std::string>();
-        auto child_frame_id = sensor_pair_transform["child_frame_id"].as<std::string>();
-        auto t = sensor_pair_transform["translation"].as<std::vector<double>>();
-        auto r = sensor_pair_transform["rotation"].as<std::vector<double>>();
+        YAML::Node transform_node = it->second;
+        auto frame_id = transform_node["frame_id"].as<std::string>();
+        auto child_frame_id = transform_node["child_frame_id"].as<std::string>();
+        auto t = transform_node["translation"].as<std::vector<double>>();
+        auto r = transform_node["rotation"].as<std::vector<double>>();
         Eigen::Matrix4d transform = Eigen::Matrix4d::Identity();
         transform.block<3, 1>(0, 3) = Eigen::Vector3d(t[0], t[1], t[2]);
         transform.block<3, 3>(0, 0) = Eigen::Quaterniond(r[3], r[0], r[1], r[2]).toRotationMatrix();
         add_extrinsic_param(frame_id, child_frame_id, transform);
       } catch (std::exception & e) {
-        error_message_ = std::string("invalid sensor_pair_transform [") + key + "]";
+        error_message_ = std::string("invalid transform [") + key + "]";
         return false;
       }
     }
