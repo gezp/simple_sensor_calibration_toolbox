@@ -19,14 +19,15 @@ namespace camera_intrinsic_calibration
 
 PinholeCalibrator::PinholeCalibrator(const YAML::Node & config)
 {
+  min_valid_image_ = config["min_valid_image"].as<int>();
   int corner_cols = config["pattern_detector"]["chessboard"]["cols"].as<int>();
   int corner_rows = config["pattern_detector"]["chessboard"]["rows"].as<int>();
   corner_size_ = cv::Size(corner_cols, corner_rows);
   float grid_size = config["pattern_detector"]["chessboard"]["size"].as<float>();
   // generate 3D corner points
-  for (int i = 0; i < corner_cols; i++) {
-    for (int j = 0; j < corner_rows; j++) {
-      pattern_points_.push_back(cv::Point3f(i * grid_size, j * grid_size, 0.0f));
+  for (int i = 0; i < corner_rows; i++) {
+    for (int j = 0; j < corner_cols; j++) {
+      pattern_points_.push_back(cv::Point3f(j * grid_size, i * grid_size, 0.0f));
     }
   }
   image_size_ = cv::Size(0, 0);
@@ -71,15 +72,13 @@ bool PinholeCalibrator::process_image(const cv::Mat & image)
 
 bool PinholeCalibrator::ready_to_optimize()
 {
-  return valid_img_num_ >= 15;
+  return valid_img_num_ >= min_valid_image_;
 }
 
 bool PinholeCalibrator::optimize()
 {
-  // check min valid num of images
-  if (valid_img_num_ < 10) {
-    status_message_ =
-      "[optimize] failed to optimize, image num at least 10, but:" + std::to_string(valid_img_num_);
+  if (image_points_.empty()) {
+    status_message_ = "[optimize] failed to optimize, no image points.";
     return false;
   }
   double rms = cv::calibrateCamera(

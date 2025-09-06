@@ -55,6 +55,7 @@ private:
   //
   int total_img_num_{0};
   int valid_img_num_{0};
+  int min_valid_image_{15};
   // calibration result
   bool calibreted_{false};
   cv::Mat camera_intrinsic_;
