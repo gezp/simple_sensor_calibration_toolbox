@@ -132,7 +132,7 @@ void CalibrationNode::process_command(uint8_t command)
     state_ = calibration_interfaces::msg::CalibrationStatus::CALIBRATING;
     clear_data();
     update_status_msg(state_, "start to calibrating.", 1);
-  } else if (command == calibration_interfaces::msg::CalibrationCommand::SAVE_RESULT) {
+  } else if (command == calibration_interfaces::msg::CalibrationCommand::SAVE) {
     if (state_ != calibration_interfaces::msg::CalibrationStatus::SUCCESSED) {
       RCLCPP_FATAL(
         node_->get_logger(),

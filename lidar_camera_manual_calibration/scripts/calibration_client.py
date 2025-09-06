@@ -265,10 +265,8 @@ class CalibrationClient(QWidget):
             msg.command = CalibrationCommand.START
         elif cmd == "reset":
             msg.command = CalibrationCommand.RESET
-        elif cmd == "collect once":
-            msg.command = CalibrationCommand.COLLECT_ONCE
         elif cmd == "save result":
-            msg.command = CalibrationCommand.SAVE_RESULT
+            msg.command = CalibrationCommand.SAVE
         elif cmd in self.translation_cmds:
             msg.command = CalibrationCommand.CUSTOM_KEY_VAULE
             msg.key = cmd[1:]

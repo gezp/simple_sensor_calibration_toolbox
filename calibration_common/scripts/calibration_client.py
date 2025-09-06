@@ -117,19 +117,9 @@ class CalibrationClient(QWidget):
         self.btn_commands.append(btn_command_reset)
         btn_command_save_result = QPushButton("save result")
         btn_command_save_result.clicked.connect(
-            lambda: self.send_command(CalibrationCommand.SAVE_RESULT)
+            lambda: self.send_command(CalibrationCommand.SAVE)
         )
         self.btn_commands.append(btn_command_save_result)
-        btn_command_collect_once = QPushButton("collect once")
-        btn_command_collect_once.clicked.connect(
-            lambda: self.send_command(CalibrationCommand.COLLECT_ONCE)
-        )
-        self.btn_commands.append(btn_command_collect_once)
-        btn_command_optimize_once = QPushButton("optimize once")
-        btn_command_optimize_once.clicked.connect(
-            lambda: self.send_command(CalibrationCommand.OPTIMIZE_ONCE)
-        )
-        self.btn_commands.append(btn_command_optimize_once)
         layout_command = QHBoxLayout()
         for btn in self.btn_commands:
             layout_command.addWidget(btn)

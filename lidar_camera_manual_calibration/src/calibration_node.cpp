@@ -233,7 +233,7 @@ void CalibrationNode::process_command(const calibration_interfaces::msg::Calibra
     state_ = calibration_interfaces::msg::CalibrationStatus::CALIBRATING;
     clear_data();
     update_status_msg(state_, "ready to project lidar pointcloud.", 1);
-  } else if (msg.command == calibration_interfaces::msg::CalibrationCommand::SAVE_RESULT) {
+  } else if (msg.command == calibration_interfaces::msg::CalibrationCommand::SAVE) {
     save_result();
   } else if (msg.command == calibration_interfaces::msg::CalibrationCommand::CUSTOM_KEY_VAULE) {
     // update calibration data
