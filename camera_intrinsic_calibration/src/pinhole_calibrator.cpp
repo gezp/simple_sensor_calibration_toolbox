@@ -29,15 +29,20 @@ PinholeCalibrator::PinholeCalibrator(const YAML::Node & config)
       pattern_points_.push_back(cv::Point3f(i * grid_size, j * grid_size, 0.0f));
     }
   }
-  //
-  int image_width = config["image_width"].as<int>();
-  int image_height = config["image_hight"].as<int>();
-  image_size_ = cv::Size(image_width, image_height);
+  image_size_ = cv::Size(0, 0);
 }
 
 bool PinholeCalibrator::process_image(const cv::Mat & image)
 {
   total_img_num_++;
+  if (image_size_ == cv::Size(0, 0)) {
+    image_size_ = image.size();
+  }
+  if (image.size() != image_size_) {
+    status_message_ =
+      "[collect data] invalid image size, total image:" + std::to_string(total_img_num_);
+    return false;
+  }
   cv::Mat gray_image;
   cv::cvtColor(image, gray_image, cv::COLOR_BGR2GRAY);
   std::vector<cv::Point2f> image_corners;
@@ -92,6 +97,7 @@ void PinholeCalibrator::clear()
   valid_img_num_ = 0;
   image_points_.clear();
   object_points_.clear();
+  image_size_ = cv::Size(0, 0);
   calibreted_ = false;
   status_message_ = "";
 }
