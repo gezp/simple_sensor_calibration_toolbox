@@ -56,7 +56,7 @@ private:
   void clear_data();
   void process_command(const calibration_interfaces::msg::CalibrationCommand & msg);
   bool update_calibration_params(const std::string & key, float value);
-  void update_status_msg(uint8_t state, const std::string & info);
+  void update_status_msg(uint8_t state, const std::string & info, uint8_t progress);
   void save_result();
   bool run();
 

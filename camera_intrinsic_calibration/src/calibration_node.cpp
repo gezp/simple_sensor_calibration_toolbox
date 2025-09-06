@@ -127,41 +127,30 @@ void CalibrationNode::process_command(uint8_t command)
   if (command == calibration_interfaces::msg::CalibrationCommand::RESET) {
     state_ = calibration_interfaces::msg::CalibrationStatus::READY;
     calibrator_->clear();
-    update_status_msg(state_, "ready.");
+    update_status_msg(state_, "ready.", 0);
   } else if (command == calibration_interfaces::msg::CalibrationCommand::START) {
-    is_auto_mode_ = true;
-    state_ = calibration_interfaces::msg::CalibrationStatus::COLLECTING;
+    state_ = calibration_interfaces::msg::CalibrationStatus::CALIBRATING;
     clear_data();
-    update_status_msg(state_, "start to collect data.");
+    update_status_msg(state_, "start to calibrating.", 1);
   } else if (command == calibration_interfaces::msg::CalibrationCommand::SAVE_RESULT) {
-    if (state_ == calibration_interfaces::msg::CalibrationStatus::DONE && success_) {
-      save_result();
-    } else {
+    if (state_ != calibration_interfaces::msg::CalibrationStatus::SUCCESSED) {
       RCLCPP_FATAL(
         node_->get_logger(),
         "failed to save result, need be state DONE and calibrated successfully!");
       return;
     }
-  } else if (command == calibration_interfaces::msg::CalibrationCommand::COLLECT_ONCE) {
-    is_auto_mode_ = false;
-    state_ = calibration_interfaces::msg::CalibrationStatus::COLLECTING;
-    clear_data();
-    need_collect_once_ = true;
-  } else if (command == calibration_interfaces::msg::CalibrationCommand::OPTIMIZE_ONCE) {
-    is_auto_mode_ = false;
-    state_ = calibration_interfaces::msg::CalibrationStatus::OPTIMIZING;
-    need_optimize_once_ = true;
+    save_result();
   } else {
     RCLCPP_FATAL(node_->get_logger(), "undefined calibration command: %d", command);
   }
 }
 
-void CalibrationNode::update_status_msg(uint8_t state, const std::string & info, bool success)
+void CalibrationNode::update_status_msg(uint8_t state, const std::string & info, uint8_t progress)
 {
   std::lock_guard<std::mutex> lock(status_mutex_);
   status_msg_.timestamp = node_->get_clock()->now();
   status_msg_.state = state;
-  status_msg_.success = success;
+  status_msg_.progress = progress;
   status_msg_.info = info;
 }
 
@@ -201,31 +190,27 @@ bool CalibrationNode::run()
     }
   }
   // calibration flow
-  if (state_ == calibration_interfaces::msg::CalibrationStatus::COLLECTING) {
-    read_data();
-    if (sensor_data_buffer_.empty()) {
-      return false;
-    }
-    auto sensor_data = sensor_data_buffer_.front();
-    sensor_data_buffer_.pop_front();
-    if (is_auto_mode_ || need_collect_once_) {
+  if (state_ == calibration_interfaces::msg::CalibrationStatus::CALIBRATING) {
+    if (!calibrator_->ready_to_optimize()) {
+      read_data();
+      if (sensor_data_buffer_.empty()) {
+        return false;
+      }
+      auto sensor_data = sensor_data_buffer_.front();
+      sensor_data_buffer_.pop_front();
       if (calibrator_->process_image(sensor_data.image)) {
         // debug
         debug_image_pub_->publish(calibrator_->get_debug_image(), sensor_data.time);
       }
-      update_status_msg(state_, calibrator_->get_status_message());
-      need_collect_once_ = false;
-    }
-    if (is_auto_mode_ && calibrator_->ready_to_optimize()) {
-      state_ = calibration_interfaces::msg::CalibrationStatus::OPTIMIZING;
-    }
-  } else if (state_ == calibration_interfaces::msg::CalibrationStatus::OPTIMIZING) {
-    if (is_auto_mode_ || need_optimize_once_) {
-      update_status_msg(state_, "start to optimize.");
-      success_ = calibrator_->optimize();
-      state_ = calibration_interfaces::msg::CalibrationStatus::DONE;
-      update_status_msg(state_, calibrator_->get_status_message(), success_);
-      need_optimize_once_ = false;
+      update_status_msg(state_, calibrator_->get_status_message(), 50);
+    } else {
+      update_status_msg(state_, "start to optimize.", 51);
+      if (calibrator_->optimize()) {
+        state_ = calibration_interfaces::msg::CalibrationStatus::SUCCESSED;
+      } else {
+        state_ = calibration_interfaces::msg::CalibrationStatus::FAILED;
+      }
+      update_status_msg(state_, calibrator_->get_status_message(), 100);
     }
   } else {
     return false;

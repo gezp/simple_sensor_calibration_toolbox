@@ -50,7 +50,7 @@ private:
   void read_data();
   void clear_data();
   void process_command(uint8_t command);
-  void update_status_msg(uint8_t state, const std::string & info, bool success = false);
+  void update_status_msg(uint8_t state, const std::string & info, uint8_t progress);
   void save_result();
   bool run();
 

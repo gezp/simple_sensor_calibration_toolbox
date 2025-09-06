@@ -247,15 +247,12 @@ class CalibrationClient(QWidget):
             self.label_calibration_status.setText("unknown")
         elif msg.state == CalibrationStatus.READY:
             self.label_calibration_status.setText("ready")
-        elif msg.state == CalibrationStatus.COLLECTING:
-            self.label_calibration_status.setText("collecting")
-        elif msg.state == CalibrationStatus.OPTIMIZING:
-            self.label_calibration_status.setText("optimizing")
-        elif msg.state == CalibrationStatus.DONE:
-            if msg.success:
-                self.label_calibration_status.setText("done[successed]")
-            else:
-                self.label_calibration_status.setText("done[failed]")
+        elif msg.state == CalibrationStatus.CALIBRATING:
+            self.label_calibration_status.setText("calibrating")
+        elif msg.state == CalibrationStatus.SUCCESSED:
+            self.label_calibration_status.setText("done[successed]")
+        elif msg.state == CalibrationStatus.FAILED:
+            self.label_calibration_status.setText("done[failed]")
         else:
             self.label_calibration_status.setText("undefined")
 
