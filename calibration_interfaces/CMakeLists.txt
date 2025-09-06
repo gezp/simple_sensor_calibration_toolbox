@@ -17,8 +17,8 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/CalibrationStatus.msg"
   "msg/CalibrationCommand.msg"
-  "msg/CameraIntrinsicResult.msg"
-  "msg/ExtrinsicResult.msg"
+  "msg/CameraIntrinsicParam.msg"
+  "msg/ExtrinsicParam.msg"
 DEPENDENCIES
   builtin_interfaces
   geometry_msgs
