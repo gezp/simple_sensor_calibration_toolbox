@@ -16,6 +16,7 @@
 import rclpy
 import sys
 import threading
+
 from PySide6.QtWidgets import (
     QApplication,
     QWidget,
@@ -35,7 +36,7 @@ import cv2
 from cv_bridge import CvBridge
 
 from calibration_interfaces.msg import CalibrationCommand, CalibrationStatus
-import sensor_msgs.msg
+import sensor_msgs
 
 
 class CalibrationClient(QWidget):
