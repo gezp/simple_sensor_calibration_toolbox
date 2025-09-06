@@ -60,7 +60,14 @@ def generate_launch_description():
         remappings=[("image", "/sensor/center_camera/image")],
         output="screen",
     )
+    calibration_client = Node(
+        name="calibration_client",
+        package="camera_intrinsic_calibration",
+        executable="calibration_client.py",
+        output="screen",
+    )
     ld = LaunchDescription()
     ld.add_action(dummy_camera_node)
     ld.add_action(calibration_node)
+    ld.add_action(calibration_client)
     return ld
