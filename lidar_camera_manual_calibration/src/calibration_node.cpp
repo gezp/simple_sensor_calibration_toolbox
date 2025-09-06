@@ -66,7 +66,7 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
   YAML::Node config_node = YAML::LoadFile(calibrator_config);
   lidar_projector_ = std::make_shared<LidarProjector>(config_node["lidar_projector"]);
   std::string topic_name_prefix =
-    "/calibration/lidar_camera_manual_calibration/" + camera_frame_id_ + "/" + lidar_frame_id_;
+    "/calibration/lidar_camera_manual_calibration/" + camera_frame_id_ + "_tf_" + lidar_frame_id_;
   // pub&sub
   pointcloud_sub_ =
     std::make_shared<calibration_common::CloudSubscriber<pcl::PointXYZI>>(node_, "pointcloud", 100);
@@ -196,6 +196,7 @@ void CalibrationNode::clear_data()
   pointcloud_sub_->clear();
   image_sub_->clear();
   image_buffer_.clear();
+  current_sensor_data_.time = -1;
 }
 
 bool CalibrationNode::update_calibration_params(const std::string & key, float value)
@@ -232,7 +233,7 @@ void CalibrationNode::process_command(const calibration_interfaces::msg::Calibra
   } else if (msg.command == calibration_interfaces::msg::CalibrationCommand::START) {
     state_ = calibration_interfaces::msg::CalibrationStatus::CALIBRATING;
     clear_data();
-    update_status_msg(state_, "ready to project lidar pointcloud.", 1);
+    update_status_msg(state_, "start to calibrate.", 1);
   } else if (msg.command == calibration_interfaces::msg::CalibrationCommand::SAVE) {
     save_result();
   } else if (msg.command == calibration_interfaces::msg::CalibrationCommand::CUSTOM_KEY_VAULE) {
@@ -294,11 +295,11 @@ bool CalibrationNode::run()
   }
   // calibration flow
   if (state_ == calibration_interfaces::msg::CalibrationStatus::CALIBRATING) {
-    if (current_sensor_data_.time == 0) {
+    if (current_sensor_data_.time < 0) {
       if (!read_data()) {
         return false;
       }
-      update_status_msg(state_, "ready to project one lidar pointcloud.", 50);
+      update_status_msg(state_, "finished to collect data.", 50);
     } else {
       // project pointcloud
       cv::Mat img = current_sensor_data_.image.clone();
@@ -310,7 +311,7 @@ bool CalibrationNode::run()
       } else {
         state_ = calibration_interfaces::msg::CalibrationStatus::FAILED;
       }
-      update_status_msg(state_, "ready to project one lidar pointcloud.", 100);
+      update_status_msg(state_, "finished to project pointcloud.", 100);
     }
   } else {
     return false;

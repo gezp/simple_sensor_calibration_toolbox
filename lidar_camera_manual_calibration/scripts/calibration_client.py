@@ -123,7 +123,7 @@ class CalibrationClient(QWidget):
         # commnad layout
         self.btn_commands = []
         layout.addWidget(QLabel("calibration command:"))
-        self.basic_cmds = ["start", "reset", "save result", "collect once"]
+        self.basic_cmds = ["start", "reset", "save result"]
         layout.addLayout(self.create_command_layout(self.basic_cmds))
         # translation
         layout_command_translation_step = QHBoxLayout()
@@ -238,7 +238,7 @@ class CalibrationClient(QWidget):
         debug_topic = (
             "/calibration/lidar_camera_manual_calibration/"
             + msg.frame_id
-            + "/"
+            + "_tf_"
             + msg.child_frame_id
             + "/debug_image"
         )
