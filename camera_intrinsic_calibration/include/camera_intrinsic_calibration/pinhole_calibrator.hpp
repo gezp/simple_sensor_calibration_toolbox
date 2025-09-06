@@ -39,6 +39,7 @@ public:
   std::string get_type();
   std::vector<double> get_intrinsics();
   std::vector<double> get_distortion_coeffs();
+  cv::Size get_image_size();
   const std::string & get_status_message();
   cv::Mat get_debug_image();
 

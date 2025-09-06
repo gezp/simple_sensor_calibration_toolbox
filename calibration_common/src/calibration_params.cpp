@@ -37,29 +37,20 @@ std::string to_string(const std::vector<double> & data)
 }
 
 bool CalibrationParams::add_camera_intrinsic_param(
-  const std::string & frame_id, const std::string & type, const std::vector<double> & intrinsics,
-  const std::vector<double> & distortion_coeffs)
+  const std::string & frame_id, const CameraIntrinsicParam & param)
 {
-  CameraIntrinsicParam param;
-  param.frame_id = frame_id;
-  param.type = type;
-  param.intrinsics = intrinsics;
-  param.distortion_coeffs = distortion_coeffs;
   camera_intrinsic_params_[frame_id] = param;
   return true;
 }
 
 bool CalibrationParams::get_camera_intrinsic_param(
-  const std::string & frame_id, std::string & type, std::vector<double> & intrinsics,
-  std::vector<double> & distortion_coeffs)
+  const std::string & frame_id, CameraIntrinsicParam & param)
 {
   auto it = camera_intrinsic_params_.find(frame_id);
   if (it == camera_intrinsic_params_.end()) {
     return false;
   }
-  type = it->second.type;
-  intrinsics = it->second.intrinsics;
-  distortion_coeffs = it->second.distortion_coeffs;
+  param = it->second;
   return true;
 }
 
@@ -121,6 +112,8 @@ bool CalibrationParams::save(const std::string & file)
     for (auto & [key, param] : camera_intrinsic_params_) {
       ofs << "    camera" << cnt << ":" << std::endl;
       ofs << "        frame_id: " << param.frame_id << std::endl;
+      ofs << "        height: " << param.height << std::endl;
+      ofs << "        width: " << param.width << std::endl;
       ofs << "        type: " << param.type << std::endl;
       ofs << "        intrinsics: " << to_string(param.intrinsics) << std::endl;
       ofs << "        distortion_coeffs: " << to_string(param.distortion_coeffs) << std::endl;
@@ -159,11 +152,13 @@ bool CalibrationParams::load(const std::string & file)
       try {
         key = it->first.as<std::string>();
         YAML::Node camera = it->second;
-        auto frame_id = camera["frame_id"].as<std::string>();
-        auto type = camera["type"].as<std::string>();
-        auto intrinsics = camera["intrinsics"].as<std::vector<double>>();
-        auto distortion_coeffs = camera["distortion_coeffs"].as<std::vector<double>>();
-        add_camera_intrinsic_param(frame_id, type, intrinsics, distortion_coeffs);
+        CameraIntrinsicParam param;
+        param.frame_id = camera["frame_id"].as<std::string>();
+        param.height = camera["height"].as<int>();
+        param.width = camera["width"].as<int>();
+        param.intrinsics = camera["intrinsics"].as<std::vector<double>>();
+        param.distortion_coeffs = camera["distortion_coeffs"].as<std::vector<double>>();
+        add_camera_intrinsic_param(param.frame_id, param);
       } catch (std::exception & e) {
         error_message_ = std::string("invalid camera data [") + key + "]";
         return false;

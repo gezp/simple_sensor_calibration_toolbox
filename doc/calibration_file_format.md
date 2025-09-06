@@ -11,9 +11,11 @@
 cameras:
     camera1:
         frame_id: camera1
+        height: 1200
+        width: 1920
         type: pinhole_radtan
-        intrinsics: [461.629, 460.152, 362.680, 246.049]
-        distortion_coeffs: [-0.27695497, 0.06712482, 0.00087538, 0.00011556, 0.0]
+        intrinsics: [1057.79, 1059.8, 962.78, 581.29]
+        distortion_coeffs: [-0.149116, 0.09615, -0.000526577, -0.000567049, -0.022971]
 transforms:
     transform1:
         frame_id: camera1

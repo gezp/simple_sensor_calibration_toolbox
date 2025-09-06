@@ -168,9 +168,15 @@ void CalibrationNode::save_result()
       return;
     }
   }
-  calibration_params_->add_camera_intrinsic_param(
-    frame_id_, calibrator_->get_type(), calibrator_->get_intrinsics(),
-    calibrator_->get_distortion_coeffs());
+  calibration_common::CameraIntrinsicParam param;
+  param.frame_id = frame_id_;
+  param.type = calibrator_->get_type();
+  auto image_size = calibrator_->get_image_size();
+  param.height = image_size.height;
+  param.width = image_size.width;
+  param.intrinsics = calibrator_->get_intrinsics();
+  param.distortion_coeffs = calibrator_->get_distortion_coeffs();
+  calibration_params_->add_camera_intrinsic_param(frame_id_, param);
   if (calibration_params_->save(output_file_)) {
     RCLCPP_INFO(node_->get_logger(), "successed to save result: %s", output_file_.c_str());
   } else {

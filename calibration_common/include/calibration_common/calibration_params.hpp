@@ -24,32 +24,31 @@
 namespace calibration_common
 {
 
+struct CameraIntrinsicParam
+{
+  std::string frame_id;
+  int height;
+  int width;
+  std::string type;
+  std::vector<double> intrinsics;
+  std::vector<double> distortion_coeffs;
+};
+
+struct ExtrinsicParam
+{
+  std::string frame_id;
+  std::string child_frame_id;
+  Eigen::Matrix4d transform;
+};
+
 class CalibrationParams
 {
-  struct CameraIntrinsicParam
-  {
-    std::string frame_id;
-    std::string type;
-    std::vector<double> intrinsics;
-    std::vector<double> distortion_coeffs;
-  };
-  struct ExtrinsicParam
-  {
-    std::string frame_id;
-    std::string child_frame_id;
-    Eigen::Matrix4d transform;
-  };
-
 public:
   CalibrationParams() = default;
   ~CalibrationParams() = default;
   // for camera intrinsic params
-  bool add_camera_intrinsic_param(
-    const std::string & frame_id, const std::string & type, const std::vector<double> & intrinsics,
-    const std::vector<double> & distortion_coeffs);
-  bool get_camera_intrinsic_param(
-    const std::string & frame_id, std::string & type, std::vector<double> & intrinsics,
-    std::vector<double> & distortion_coeffs);
+  bool add_camera_intrinsic_param(const std::string & frame_id, const CameraIntrinsicParam & param);
+  bool get_camera_intrinsic_param(const std::string & frame_id, CameraIntrinsicParam & param);
   void remove_camera_intrinsic_param(const std::string & frame_id);
   // for extrinsic params
   bool add_extrinsic_param(

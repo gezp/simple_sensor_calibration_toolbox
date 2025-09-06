@@ -116,6 +116,7 @@ std::vector<double> PinholeCalibrator::get_intrinsics()
       camera_intrinsic_.at<double>(0, 2), camera_intrinsic_.at<double>(1, 2)};
   }
 }
+
 std::vector<double> PinholeCalibrator::get_distortion_coeffs()
 {
   if (!calibreted_) {
@@ -127,6 +128,12 @@ std::vector<double> PinholeCalibrator::get_distortion_coeffs()
       camera_distortion_.at<double>(0, 4)};
   }
 }
+
+cv::Size PinholeCalibrator::get_image_size()
+{
+  return image_size_;
+}
+
 const std::string & PinholeCalibrator::get_status_message()
 {
   return status_message_;

@@ -52,16 +52,13 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
   auto calibration_params = std::make_shared<calibration_common::CalibrationParams>();
   calibration_params->load(initial_calibration_file_);
   calibration_params->get_extrinsic_param(camera_frame_id_, lidar_frame_id_, T_camera_lidar_);
-  std::string type;
-  std::vector<double> intrinsics;
-  std::vector<double> distortion_coeffs;
-  calibration_params->get_camera_intrinsic_param(
-    camera_frame_id_, type, intrinsics, distortion_coeffs);
-  if (intrinsics.size() != 4) {
+  calibration_common::CameraIntrinsicParam param;
+  calibration_params->get_camera_intrinsic_param(camera_frame_id_, param);
+  if (param.intrinsics.size() != 4) {
     RCLCPP_FATAL(node_->get_logger(), "camera intrinsic in calibration file is invalid");
     return;
   }
-  camera_intrinsic_ = intrinsics;
+  camera_intrinsic_ = param.intrinsics;
   // lidar projector
   YAML::Node config_node = YAML::LoadFile(calibrator_config);
   lidar_projector_ = std::make_shared<LidarProjector>(config_node["lidar_projector"]);
