@@ -27,15 +27,12 @@ void ImuSubscriber::msg_callback(const sensor_msgs::msg::Imu::SharedPtr imu_msg_
 {
   ImuData data;
   data.time = rclcpp::Time(imu_msg_ptr->header.stamp).seconds();
-
-  data.linear_acceleration[0] = imu_msg_ptr->linear_acceleration.x;
-  data.linear_acceleration[1] = imu_msg_ptr->linear_acceleration.y;
-  data.linear_acceleration[2] = imu_msg_ptr->linear_acceleration.z;
-
   data.angular_velocity[0] = imu_msg_ptr->angular_velocity.x;
   data.angular_velocity[1] = imu_msg_ptr->angular_velocity.y;
   data.angular_velocity[2] = imu_msg_ptr->angular_velocity.z;
-
+  data.linear_acceleration[0] = imu_msg_ptr->linear_acceleration.x;
+  data.linear_acceleration[1] = imu_msg_ptr->linear_acceleration.y;
+  data.linear_acceleration[2] = imu_msg_ptr->linear_acceleration.z;
   buffer_mutex_.lock();
   buffer_.push_back(data);
   buffer_mutex_.unlock();

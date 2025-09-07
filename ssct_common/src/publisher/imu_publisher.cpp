@@ -30,17 +30,14 @@ void ImuPublisher::publish(const ImuData & imu_data)
 {
   rclcpp::Time ros_time(static_cast<uint64_t>(imu_data.time * 1e9));
   imu_.header.stamp = ros_time;
-
-  // set angular velocity:
+  // set angular velocity
   imu_.angular_velocity.x = imu_data.angular_velocity.x();
   imu_.angular_velocity.y = imu_data.angular_velocity.y();
   imu_.angular_velocity.z = imu_data.angular_velocity.z();
-
-  // set linear acceleration:
+  // set linear acceleration
   imu_.linear_acceleration.x = imu_data.linear_acceleration.x();
   imu_.linear_acceleration.y = imu_data.linear_acceleration.y();
   imu_.linear_acceleration.z = imu_data.linear_acceleration.z();
-
   publisher_->publish(imu_);
 }
 
