@@ -41,8 +41,8 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
     return;
   }
   // pub&sub
-  image_sub_ = std::make_shared<ssct_common::ImageSubscriber>(
-    node_, "image", 100, enable_compressed_image_);
+  image_sub_ =
+    std::make_shared<ssct_common::ImageSubscriber>(node_, "image", 100, enable_compressed_image_);
   std::string command_topic = "/calibration/camera_intrinsic/" + frame_id_ + "/command";
   auto command_msg_callback =
     [this](const ssct_interfaces::msg::CalibrationCommand::SharedPtr msg) {
@@ -55,8 +55,7 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
   cmd_sub_ = node_->create_subscription<ssct_interfaces::msg::CalibrationCommand>(
     command_topic, 10, command_msg_callback);
   std::string status_topic = "/calibration/camera_intrinsic/" + frame_id_ + "/status";
-  status_pub_ =
-    node_->create_publisher<ssct_interfaces::msg::CalibrationStatus>(status_topic, 100);
+  status_pub_ = node_->create_publisher<ssct_interfaces::msg::CalibrationStatus>(status_topic, 100);
   std::string debug_topic = "/calibration/camera_intrinsic/" + frame_id_ + "/debug_image";
   debug_image_pub_ =
     std::make_shared<ssct_common::ImagePublisher>(node_, debug_topic, 100, frame_id_);

@@ -67,8 +67,8 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
   // pub&sub
   pointcloud_sub_ =
     std::make_shared<ssct_common::CloudSubscriber<pcl::PointXYZI>>(node_, "pointcloud", 100);
-  image_sub_ = std::make_shared<ssct_common::ImageSubscriber>(
-    node_, "image", 100, enable_compressed_image_);
+  image_sub_ =
+    std::make_shared<ssct_common::ImageSubscriber>(node_, "image", 100, enable_compressed_image_);
   std::string command_topic = topic_name_prefix + "/command";
   auto command_msg_callback =
     [this](const ssct_interfaces::msg::CalibrationCommand::SharedPtr msg) {
