@@ -41,8 +41,10 @@ add_library(${PROJECT_NAME} SHARED
   # publisher
   src/publisher/cloud_publisher.cpp
   src/publisher/image_publisher.cpp
+  src/publisher/imu_publisher.cpp
   # subscriber
   src/subscriber/image_subscriber.cpp
+  src/subscriber/imu_subscriber.cpp
   # dummy_sensor
   src/dummy_sensor/dummy_camera_node.cpp
   src/dummy_sensor/dummy_lidar_node.cpp
