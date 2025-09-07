@@ -1,4 +1,4 @@
-# sensor_calibration
+# simple sensor calibration toolbox (SSCT)
 
 [![Build and Test](https://github.com/gezp/sensor_calibration/actions/workflows/ci.yml/badge.svg?branch=humble)](https://github.com/gezp/sensor_calibration/actions/workflows/ci.yml)
 
@@ -40,15 +40,15 @@ colcon build --symlink-install
 
 传感器内参标定
 
-- [x] 实现针孔相机内参标定: `camera_intrinsic_calibration`
-- [ ] 实现鱼眼相机内参标定: `camera_intrinsic_calibration`
-- [ ] 实现全景相机内参标定: `camera_intrinsic_calibration`
+- [x] 实现针孔相机内参标定: `ssct_camera_intrinsic_calib`
+- [ ] 实现鱼眼相机内参标定: `ssct_camera_intrinsic_calib`
+- [ ] 实现全景相机内参标定: `ssct_camera_intrinsic_calib`
 
 sensor2sensor外参标定
 
-- [ ] 实现手动lidar2lidar外参标定: `lidar_lidar_manual_calibration`
-- [ ] 实现基于ICP的自动lidar2lidar外参标定: `lidar_lidar_calibration`
-- [x] 实现手动lidar2camera外参标定: `lidar_camera_manual_calibration`
+- [ ] 实现手动lidar2lidar外参标定: `ssct_lidar_lidar_calib`
+- [ ] 实现基于ICP的自动lidar2lidar外参标定: `ssct_lidar_lidar_calib`
+- [x] 实现手动lidar2camera外参标定: `ssct_lidar_cam_manual_calib`
 
 
 ## Acknowledgement

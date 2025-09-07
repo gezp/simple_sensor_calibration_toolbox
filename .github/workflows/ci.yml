@@ -22,15 +22,15 @@ jobs:
           skip-tests: true
       - name: Remove flake8-quotes flake8-import-order for linter
         run: /usr/bin/bash -c "apt-get remove -y python3-flake8-quotes python3-flake8-import-order"
-      - name: Test calibration_interfaces
+      - name: Test ssct_interfaces
         run: |
-          /usr/bin/bash .github/workflows/colcon_test.sh calibration_interfaces
-      - name: Test calibration_common
+          /usr/bin/bash .github/workflows/colcon_test.sh ssct_interfaces
+      - name: Test ssct_common
         run: |
-          /usr/bin/bash .github/workflows/colcon_test.sh calibration_common
-      - name: Test camera_intrinsic_calibration
+          /usr/bin/bash .github/workflows/colcon_test.sh ssct_common
+      - name: Test ssct_camera_intrinsic_calib
         run: |
-          /usr/bin/bash .github/workflows/colcon_test.sh camera_intrinsic_calibration
-      - name: Test lidar_camera_manual_calibration
+          /usr/bin/bash .github/workflows/colcon_test.sh ssct_camera_intrinsic_calib
+      - name: Test ssct_lidar_cam_manual_calib
         run: |
-          /usr/bin/bash .github/workflows/colcon_test.sh lidar_camera_manual_calibration
+          /usr/bin/bash .github/workflows/colcon_test.sh ssct_lidar_cam_manual_calib
