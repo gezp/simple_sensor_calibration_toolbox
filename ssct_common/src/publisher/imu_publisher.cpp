@@ -18,10 +18,10 @@ namespace ssct_common
 {
 
 ImuPublisher::ImuPublisher(
-  rclcpp::Node::SharedPtr node, std::string topic_name, std::string frame_id, size_t buff_size)
+  rclcpp::Node::SharedPtr node, std::string topic_name, size_t buffer_size, std::string frame_id)
 : node_(node), frame_id_(frame_id)
 {
-  publisher_ = node_->create_publisher<sensor_msgs::msg::Imu>(topic_name, buff_size);
+  publisher_ = node_->create_publisher<sensor_msgs::msg::Imu>(topic_name, buffer_size);
 
   imu_.header.frame_id = frame_id_;
 }

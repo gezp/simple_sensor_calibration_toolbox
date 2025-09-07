@@ -48,6 +48,7 @@ add_library(${PROJECT_NAME} SHARED
   # dummy_sensor
   src/dummy_sensor/dummy_camera_node.cpp
   src/dummy_sensor/dummy_lidar_node.cpp
+  src/dummy_sensor/dummy_imu_node.cpp
   # utils
   src/calibration_params.cpp
   src/msg_utils.cpp
@@ -70,6 +71,11 @@ add_executable(dummy_camera_node
   src/dummy_sensor/dummy_camera_main.cpp)
 target_link_libraries(dummy_camera_node ${PROJECT_NAME})
 
+# dummy imu node
+add_executable(dummy_imu_node
+  src/dummy_sensor/dummy_imu_main.cpp)
+target_link_libraries(dummy_imu_node ${PROJECT_NAME})
+
 # install include directories
 install(DIRECTORY include/
   DESTINATION include
@@ -88,6 +94,7 @@ install(TARGETS ${PROJECT_NAME}
 install(TARGETS
     dummy_lidar_node
     dummy_camera_node
+    dummy_imu_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

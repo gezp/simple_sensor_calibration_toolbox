@@ -1,4 +1,4 @@
-// Copyright 2025 Gezp (https://github.com/gezp).
+// Copyright 2024 Gezp (https://github.com/gezp).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,29 +14,40 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/imu.hpp"
-
-#include "ssct_common/sensor_data/imu_data.hpp"
+#include "ssct_common/publisher/imu_publisher.hpp"
 
 namespace ssct_common
 {
-class ImuPublisher
+
+class DummyImuNode
 {
 public:
-  ImuPublisher(
-    rclcpp::Node::SharedPtr node, std::string topic_name, size_t buffer_size, std::string frame_id);
+  explicit DummyImuNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+  rclcpp::node_interfaces::NodeBaseInterface::SharedPtr get_node_base_interface()
+  {
+    return node_->get_node_base_interface();
+  }
 
-  void publish(const ImuData & imu_data);
-  bool has_subscribers();
+private:
+  bool read_data();
 
 private:
   rclcpp::Node::SharedPtr node_;
-  rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr publisher_;
-  std::string frame_id_;
-
-  sensor_msgs::msg::Imu imu_;
+  rclcpp::TimerBase::SharedPtr timer_;
+  std::shared_ptr<ImuPublisher> imu_pub_;
+  // param
+  std::string frame_id_{"imu"};
+  std::string data_file_;
+  double rate_{100};
+  double timestamp_{0};
+  bool loop_{true};
+  // data
+  std::vector<ImuData> imus_;
+  size_t current_idx_{0};
 };
 }  // namespace ssct_common
