@@ -19,11 +19,10 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    data_dir = os.path.join(
-        os.environ["HOME"], "calibration_data", "SensorsCalibration"
-    )
-    lidar_data_dir = os.path.join(data_dir, "lidar2camera", "lidar")
-    camera_data_dir = os.path.join(data_dir, "camera_intrinsic")
+    data_dir = os.path.join(os.environ["HOME"], "calibration_data")
+    lidar_data_dir = os.path.join(data_dir, "SensorsCalibration", "lidar2camera", "lidar")
+    camera_data_dir = os.path.join(data_dir, "SensorsCalibration", "camera_intrinsic")
+    imu_data_file = os.path.join(data_dir, "imu_data", "uncalibrated_imu_data.csv")
     dummy_lidar_node = Node(
         name="dummy_lidar_node",
         package="ssct_common",
@@ -44,7 +43,21 @@ def generate_launch_description():
         ],
         output="screen",
     )
+    dummy_imu_node = Node(
+        name="dummy_imu_node",
+        package="ssct_common",
+        executable="dummy_imu_node",
+        parameters=[
+            {
+                "data_file": imu_data_file,
+                "frame_id": "center_imu",
+                "rate": 100.0,
+            }
+        ],
+        output="screen",
+    )
     ld = LaunchDescription()
     ld.add_action(dummy_lidar_node)
     ld.add_action(dummy_camera_node)
+    ld.add_action(dummy_imu_node)
     return ld

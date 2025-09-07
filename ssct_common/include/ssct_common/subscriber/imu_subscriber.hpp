@@ -13,45 +13,32 @@
 // limitations under the License.
 
 #pragma once
-
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h>
-
-#include <memory>
+#include <deque>
+#include <mutex>
 #include <string>
-#include <vector>
 
+#include "ssct_common/sensor_data/imu_data.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "ssct_common/publisher/cloud_publisher.hpp"
+#include "sensor_msgs/msg/imu.hpp"
 
 namespace ssct_common
 {
-
-class DummyLidarNode
+class ImuSubscriber
 {
 public:
-  explicit DummyLidarNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
-  rclcpp::node_interfaces::NodeBaseInterface::SharedPtr get_node_base_interface()
-  {
-    return node_->get_node_base_interface();
-  }
+  ImuSubscriber(rclcpp::Node::SharedPtr node, std::string topic_name, size_t buff_size);
+  ImuSubscriber() = default;
+  void read(std::deque<ImuData> & output);
+  void clear();
 
 private:
-  bool read_data();
+  void msg_callback(const sensor_msgs::msg::Imu::SharedPtr imu_msg_ptr);
 
 private:
   rclcpp::Node::SharedPtr node_;
-  rclcpp::TimerBase::SharedPtr timer_;
-  std::shared_ptr<CloudPublisher> cloud_pub_;
-  // param
-  std::string frame_id_{"lidar"};
-  std::string data_dir_;
-  double rate_{10};
-  double timestamp_{0};
-  bool loop_{true};
-  // data
-  std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> pointclouds_;
-  size_t current_idx_{0};
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr subscriber_;
+
+  std::deque<ImuData> buffer_;
+  std::mutex buffer_mutex_;
 };
 }  // namespace ssct_common
