@@ -25,7 +25,7 @@
 #include "ssct_common/publisher/image_publisher.hpp"
 #include "ssct_common/subscriber/image_subscriber.hpp"
 #include "ssct_common/subscriber/cloud_subscriber.hpp"
-#include "ssct_common/calibration_params.hpp"
+#include "ssct_common/calib_param_manager.hpp"
 #include "ssct_interfaces/msg/calibration_status.hpp"
 #include "ssct_interfaces/msg/calibration_command.hpp"
 #include "ssct_lidar_cam_manual_calib/lidar_projector.hpp"
@@ -55,7 +55,7 @@ private:
   bool read_data();
   void clear_data();
   void process_command(const ssct_interfaces::msg::CalibrationCommand & msg);
-  bool update_calibration_params(const std::string & key, float value);
+  bool update_calib_param_manager(const std::string & key, float value);
   void update_status_msg(uint8_t state, const std::string & info, uint8_t progress);
   void save_result();
   bool run();

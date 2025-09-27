@@ -21,41 +21,33 @@
 #include <map>
 #include <utility>
 
+#include "ssct_common/calib_param/camera_intrinsic_param.hpp"
+#include "ssct_common/calib_param/imu_intrinsic_param.hpp"
+#include "ssct_common/calib_param/extrinsic_param.hpp"
+
 namespace ssct_common
 {
 
-struct CameraIntrinsicParam
-{
-  std::string frame_id;
-  int height;
-  int width;
-  std::string type;
-  std::vector<double> intrinsics;
-  std::vector<double> distortion_coeffs;
-};
-
-struct ExtrinsicParam
-{
-  std::string frame_id;
-  std::string child_frame_id;
-  Eigen::Matrix4d transform;
-};
-
-class CalibrationParams
+class CalibParamManager
 {
 public:
-  CalibrationParams() = default;
-  ~CalibrationParams() = default;
+  CalibParamManager() = default;
+  ~CalibParamManager() = default;
   // for camera intrinsic params
-  bool add_camera_intrinsic_param(const std::string & frame_id, const CameraIntrinsicParam & param);
+  bool add_camera_intrinsic_param(const CameraIntrinsicParam & param);
   bool get_camera_intrinsic_param(const std::string & frame_id, CameraIntrinsicParam & param);
   void remove_camera_intrinsic_param(const std::string & frame_id);
+  // for imu intrinsic params
+  bool add_imu_intrinsic_param(const ImuIntrinsicParam & param);
+  bool get_imu_intrinsic_param(const std::string & frame_id, ImuIntrinsicParam & param);
+  void remove_imu_intrinsic_param(const std::string & frame_id);
   // for extrinsic params
+  bool add_extrinsic_param(const ExtrinsicParam & param);
   bool add_extrinsic_param(
     const std::string & frame_id, const std::string & child_frame_id,
     const Eigen::Matrix4d & transform);
   bool get_extrinsic_param(
-    const std::string & frame_id, const std::string & child_frame_id, Eigen::Matrix4d & transform);
+    const std::string & frame_id, const std::string & child_frame_id, ExtrinsicParam & param);
   void remove_extrinsic_param(const std::string & frame_id, const std::string & child_frame_id);
   // save & load
   bool save(const std::string & file);
@@ -65,6 +57,7 @@ public:
 
 private:
   std::map<std::string, CameraIntrinsicParam> camera_intrinsic_params_;
+  std::map<std::string, ImuIntrinsicParam> imu_intrinsic_params_;
   std::map<std::string, ExtrinsicParam> extrinsic_params_;
   std::string error_message_;
 };

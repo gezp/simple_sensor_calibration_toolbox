@@ -63,7 +63,7 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
   // calibrator
   YAML::Node config_node = YAML::LoadFile(calibrator_config);
   calibrator_ = std::make_shared<PinholeCalibrator>(config_node["pinhole_calibrator"]);
-  calibration_params_ = std::make_shared<ssct_common::CalibrationParams>();
+  calib_param_manager_ = std::make_shared<ssct_common::CalibParamManager>();
   // initialize status
   status_msg_.frame_id = frame_id_;
   status_msg_.sensor_topic = image_sub_->get_topic_name();
@@ -160,10 +160,10 @@ void CalibrationNode::save_result()
     return;
   }
   if (std::filesystem::exists(output_file_)) {
-    if (!calibration_params_->load(output_file_)) {
+    if (!calib_param_manager_->load(output_file_)) {
       RCLCPP_FATAL(
         node_->get_logger(), "failed to load existed calibration data, %s",
-        calibration_params_->error_message().c_str());
+        calib_param_manager_->error_message().c_str());
       return;
     }
   }
@@ -175,8 +175,8 @@ void CalibrationNode::save_result()
   param.width = image_size.width;
   param.intrinsics = calibrator_->get_intrinsics();
   param.distortion_coeffs = calibrator_->get_distortion_coeffs();
-  calibration_params_->add_camera_intrinsic_param(frame_id_, param);
-  if (calibration_params_->save(output_file_)) {
+  calib_param_manager_->add_camera_intrinsic_param(param);
+  if (calib_param_manager_->save(output_file_)) {
     RCLCPP_INFO(node_->get_logger(), "successed to save result: %s", output_file_.c_str());
   } else {
     RCLCPP_INFO(node_->get_logger(), "failed to save result: %s", output_file_.c_str());

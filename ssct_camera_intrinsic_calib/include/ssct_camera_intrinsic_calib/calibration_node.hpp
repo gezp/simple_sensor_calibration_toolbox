@@ -22,7 +22,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "ssct_common/publisher/image_publisher.hpp"
 #include "ssct_common/subscriber/image_subscriber.hpp"
-#include "ssct_common/calibration_params.hpp"
+#include "ssct_common/calib_param_manager.hpp"
 #include "ssct_camera_intrinsic_calib/pinhole_calibrator.hpp"
 #include "ssct_interfaces/msg/calibration_status.hpp"
 #include "ssct_interfaces/msg/calibration_command.hpp"
@@ -72,7 +72,7 @@ private:
   bool exit_{false};
   // data
   std::deque<SensorData> sensor_data_buffer_;
-  std::shared_ptr<ssct_common::CalibrationParams> calibration_params_;
+  std::shared_ptr<ssct_common::CalibParamManager> calib_param_manager_;
   uint8_t state_;
   bool success_{false};
   bool is_auto_mode_{true};

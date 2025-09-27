@@ -16,6 +16,17 @@ cameras:
         type: pinhole_radtan
         intrinsics: [1057.79, 1059.8, 962.78, 581.29]
         distortion_coeffs: [-0.149116, 0.09615, -0.000526577, -0.000567049, -0.022971]
+imus:
+    imu1:
+        frame_id: imu1
+        accel_matrix: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+        accel_offset: [0, 0, 0]
+        accel_noise_density: [1.86e-03, 1.86e-03, 1.86e-03]
+        accel_random_walk: [4.33e-04, 4.33e-04, 4.33e-04]
+        gyro_matrix: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+        gyro_offset: [0, 0, 0]
+        gyro_noise_density: [1.87e-04, 1.87e-04, 1.87e-04]
+        gyro_random_walk: [2.66e-05, 2.66e-05, 2.66e-05]
 transforms:
     transform1:
         frame_id: camera1
@@ -29,24 +40,12 @@ transforms:
         rotation: [0.0 ,0.0 ,0.0 ,1.0] # x,y,z,w
 ```
 
-## 传感器外参说明
-
-传感器的外参包括以下四个量
-
-* frame_id：传感器的frame id
-* child_frame_id：另一个传感器的frame id
-* translation：外参坐标变换中的平移部分
-* rotation：外参坐标变换中的旋转部分，采用四元数表示，顺序为`[x,y,z,w]`
-
-这里标定出的坐标变换表示为 $T_\text{frame id - child frame id}$，等价以下两种说法：
-
-* 在`frame_id`传感器坐标系下，`child_frame_id`的位姿。
-* `child_frame_id`坐标系到`frame_id`坐标系下的位姿变换。
-
 ## 相机内参说明
 
 相机内参包括以下三个量
 
+* frame_id：传感器的frame id
+* height，width：标定相机的图片分辨率
 * type：采用的相机模型类型，为一个字符串
 * intrinsics：相机内参系数，为一个float数组
 * distortion_coeffs：畸变参数系数，为一个float数组
@@ -75,3 +74,39 @@ transforms:
 * distortion_coeffs: $[k_1, k_2, p_1, p_2, k_3]$ ，其中k为径向畸变参数，p为切向畸变参数。
 * 参考：https://docs.opencv.org/4.x/dd/d12/tutorial_omnidir_calib_main.html
 
+
+## Imu内参说明
+
+IMU内参包括加速度计accel和陀螺仪gyro两组数据
+
+* frame_id：传感器的frame id
+* accel_matrix，accel_offset：速度计accel的仿射变换模型参数，修正测量值。
+* accel_noise_density，accel_random_walk：速度计accel的白噪声以及零偏不稳定（随机游走）噪声。
+* gyro_matrix，gyro_offset：陀螺仪gyro的仿射变换模型参数，修正测量值。
+* gyro_noise_density，gyro_random_walk：陀螺仪gyro的白噪声以及零偏不稳定（随机游走）噪声。
+
+速度计accel和陀螺仪gyro采用仿射变换建立确定性误差模型，修正scale,misalignment等误差，测量值修正公式如下：
+$$
+\hat x_{accel} = A_{accel}x_{accel} + b_{accel} \\
+\hat x_{gyro} = A_{gyro}x_{gyro} + b_{gyro} \\
+$$
+
+* 其中$x$是原始测量值，$\hat x$是标定修正后的值，A对应matrix参数，b对应offset参数
+
+random_walk和noise_density是随机误差（不确定性误差）模型参数，一般使用allan方差分析得到
+* 参考：https://github.com/ethz-asl/kalibr/wiki/IMU-Noise-Model
+
+
+## 传感器外参说明
+
+传感器的外参包括以下四个量
+
+* frame_id：传感器的frame id
+* child_frame_id：另一个传感器的frame id
+* translation：外参坐标变换中的平移部分
+* rotation：外参坐标变换中的旋转部分，采用四元数表示，顺序为`[x,y,z,w]`
+
+这里标定出的坐标变换表示为 $T_\text{frame id - child frame id}$，等价以下两种说法：
+
+* 在`frame_id`传感器坐标系下，`child_frame_id`的位姿。
+* `child_frame_id`坐标系到`frame_id`坐标系下的位姿变换。

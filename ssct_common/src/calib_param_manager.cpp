@@ -17,7 +17,7 @@
 #include <sstream>
 #include <fstream>
 
-#include "ssct_common/calibration_params.hpp"
+#include "ssct_common/calib_param_manager.hpp"
 
 namespace ssct_common
 {
@@ -36,14 +36,37 @@ std::string to_string(const std::vector<double> & data)
   return ss.str();
 }
 
-bool CalibrationParams::add_camera_intrinsic_param(
-  const std::string & frame_id, const CameraIntrinsicParam & param)
+std::string to_string(const Eigen::Matrix3d & data)
 {
-  camera_intrinsic_params_[frame_id] = param;
+  std::vector<double> vec(data.data(), data.data() + data.size());
+  return to_string(vec);
+}
+
+std::string to_string(const Eigen::Vector3d & data)
+{
+  std::vector<double> vec(data.data(), data.data() + data.size());
+  return to_string(vec);
+}
+
+Eigen::Matrix3d to_Matrix3d(const std::vector<double> & data)
+{
+  assert(data.size() == 9);
+  return Eigen::Map<const Eigen::Matrix3d>(data.data());
+}
+
+Eigen::Vector3d to_Vector3d(const std::vector<double> & data)
+{
+  assert(data.size() == 3);
+  return Eigen::Map<const Eigen::Vector3d>(data.data());
+}
+
+bool CalibParamManager::add_camera_intrinsic_param(const CameraIntrinsicParam & param)
+{
+  camera_intrinsic_params_[param.frame_id] = param;
   return true;
 }
 
-bool CalibrationParams::get_camera_intrinsic_param(
+bool CalibParamManager::get_camera_intrinsic_param(
   const std::string & frame_id, CameraIntrinsicParam & param)
 {
   auto it = camera_intrinsic_params_.find(frame_id);
@@ -54,7 +77,7 @@ bool CalibrationParams::get_camera_intrinsic_param(
   return true;
 }
 
-void CalibrationParams::remove_camera_intrinsic_param(const std::string & frame_id)
+void CalibParamManager::remove_camera_intrinsic_param(const std::string & frame_id)
 {
   auto it = camera_intrinsic_params_.find(frame_id);
   if (it != camera_intrinsic_params_.end()) {
@@ -62,7 +85,39 @@ void CalibrationParams::remove_camera_intrinsic_param(const std::string & frame_
   }
 }
 
-bool CalibrationParams::add_extrinsic_param(
+bool CalibParamManager::add_imu_intrinsic_param(const ImuIntrinsicParam & param)
+{
+  imu_intrinsic_params_[param.frame_id] = param;
+  return true;
+}
+
+bool CalibParamManager::get_imu_intrinsic_param(
+  const std::string & frame_id, ImuIntrinsicParam & param)
+{
+  auto it = imu_intrinsic_params_.find(frame_id);
+  if (it == imu_intrinsic_params_.end()) {
+    return false;
+  }
+  param = it->second;
+  return true;
+}
+
+void CalibParamManager::remove_imu_intrinsic_param(const std::string & frame_id)
+{
+  auto it = imu_intrinsic_params_.find(frame_id);
+  if (it != imu_intrinsic_params_.end()) {
+    imu_intrinsic_params_.erase(it);
+  }
+}
+
+bool CalibParamManager::add_extrinsic_param(const ExtrinsicParam & param)
+{
+  std::string key = param.frame_id + "_tf_" + param.child_frame_id;
+  extrinsic_params_[key] = param;
+  return true;
+}
+
+bool CalibParamManager::add_extrinsic_param(
   const std::string & frame_id, const std::string & child_frame_id,
   const Eigen::Matrix4d & transform)
 {
@@ -70,24 +125,22 @@ bool CalibrationParams::add_extrinsic_param(
   param.frame_id = frame_id;
   param.child_frame_id = child_frame_id;
   param.transform = transform;
-  std::string key = frame_id + "_tf_" + child_frame_id;
-  extrinsic_params_[key] = param;
-  return true;
+  return add_extrinsic_param(param);
 }
 
-bool CalibrationParams::get_extrinsic_param(
-  const std::string & frame_id, const std::string & child_frame_id, Eigen::Matrix4d & transform)
+bool CalibParamManager::get_extrinsic_param(
+  const std::string & frame_id, const std::string & child_frame_id, ExtrinsicParam & param)
 {
   std::string key = frame_id + "_tf_" + child_frame_id;
   auto it = extrinsic_params_.find(key);
   if (it == extrinsic_params_.end()) {
     return false;
   }
-  transform = it->second.transform;
+  param = it->second;
   return true;
 }
 
-void CalibrationParams::remove_extrinsic_param(
+void CalibParamManager::remove_extrinsic_param(
   const std::string & frame_id, const std::string & child_frame_id)
 {
   auto key = frame_id + "_tf_" + child_frame_id;
@@ -97,7 +150,7 @@ void CalibrationParams::remove_extrinsic_param(
   }
 }
 
-bool CalibrationParams::save(const std::string & file)
+bool CalibParamManager::save(const std::string & file)
 {
   std::ofstream ofs;
   ofs.open(file);
@@ -117,6 +170,23 @@ bool CalibrationParams::save(const std::string & file)
       ofs << "        type: " << param.type << std::endl;
       ofs << "        intrinsics: " << to_string(param.intrinsics) << std::endl;
       ofs << "        distortion_coeffs: " << to_string(param.distortion_coeffs) << std::endl;
+      cnt++;
+    }
+  }
+  if (!imu_intrinsic_params_.empty()) {
+    ofs << "imus:" << std::endl;
+    int cnt = 1;
+    for (auto & [key, param] : imu_intrinsic_params_) {
+      ofs << "    imu" << cnt << ":" << std::endl;
+      ofs << "        frame_id: " << param.frame_id << std::endl;
+      ofs << "        accel_matrix: " << to_string(param.accel_matrix) << std::endl;
+      ofs << "        accel_offset: " << to_string(param.accel_offset) << std::endl;
+      ofs << "        accel_noise_density: " << to_string(param.accel_noise_density) << std::endl;
+      ofs << "        accel_random_walk: " << to_string(param.accel_random_walk) << std::endl;
+      ofs << "        gyro_matrix: " << to_string(param.gyro_matrix) << std::endl;
+      ofs << "        gyro_offset: " << to_string(param.gyro_offset) << std::endl;
+      ofs << "        gyro_noise_density: " << to_string(param.gyro_noise_density) << std::endl;
+      ofs << "        gyro_random_walk: " << to_string(param.gyro_random_walk) << std::endl;
       cnt++;
     }
   }
@@ -140,7 +210,7 @@ bool CalibrationParams::save(const std::string & file)
   return true;
 }
 
-bool CalibrationParams::load(const std::string & file)
+bool CalibParamManager::load(const std::string & file)
 {
   camera_intrinsic_params_.clear();
   extrinsic_params_.clear();
@@ -158,9 +228,36 @@ bool CalibrationParams::load(const std::string & file)
         param.width = camera["width"].as<int>();
         param.intrinsics = camera["intrinsics"].as<std::vector<double>>();
         param.distortion_coeffs = camera["distortion_coeffs"].as<std::vector<double>>();
-        add_camera_intrinsic_param(param.frame_id, param);
+        add_camera_intrinsic_param(param);
       } catch (std::exception & e) {
         error_message_ = std::string("invalid camera data [") + key + "]";
+        return false;
+      }
+    }
+  }
+  auto imus = config["imus"];
+  if (imus.IsDefined() && imus.IsMap()) {
+    for (auto it = cameras.begin(); it != imus.end(); ++it) {
+      std::string key = "unknown";
+      try {
+        key = it->first.as<std::string>();
+        YAML::Node camera = it->second;
+        ImuIntrinsicParam param;
+        param.frame_id = camera["frame_id"].as<std::string>();
+        param.accel_matrix = to_Matrix3d(camera["accel_matrix"].as<std::vector<double>>());
+        param.accel_offset = to_Vector3d(camera["accel_offset"].as<std::vector<double>>());
+        param.accel_noise_density =
+          to_Vector3d(camera["accel_noise_density"].as<std::vector<double>>());
+        param.accel_random_walk =
+          to_Vector3d(camera["accel_random_walk"].as<std::vector<double>>());
+        param.gyro_matrix = to_Matrix3d(camera["gyro_matrix"].as<std::vector<double>>());
+        param.gyro_offset = to_Vector3d(camera["gyro_offset"].as<std::vector<double>>());
+        param.gyro_noise_density =
+          to_Vector3d(camera["gyro_noise_density"].as<std::vector<double>>());
+        param.gyro_random_walk = to_Vector3d(camera["gyro_random_walk"].as<std::vector<double>>());
+        add_imu_intrinsic_param(param);
+      } catch (std::exception & e) {
+        error_message_ = std::string("invalid imu data [") + key + "]";
         return false;
       }
     }
@@ -189,7 +286,7 @@ bool CalibrationParams::load(const std::string & file)
   return true;
 }
 
-std::string CalibrationParams::error_message()
+std::string CalibParamManager::error_message()
 {
   return error_message_;
 }
