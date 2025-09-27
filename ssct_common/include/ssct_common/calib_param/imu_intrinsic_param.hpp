@@ -28,13 +28,13 @@ struct ImuIntrinsicParam
   // for accelerometer
   Eigen::Matrix3d accel_matrix;
   Eigen::Vector3d accel_offset;
-  Eigen::Vector3d accel_random_walk;
   Eigen::Vector3d accel_noise_density;
+  Eigen::Vector3d accel_random_walk;
   // for gyroscope
   Eigen::Matrix3d gyro_matrix;
   Eigen::Vector3d gyro_offset;
-  Eigen::Vector3d gyro_random_walk;
   Eigen::Vector3d gyro_noise_density;
+  Eigen::Vector3d gyro_random_walk;
 };
 
 }  // namespace ssct_common

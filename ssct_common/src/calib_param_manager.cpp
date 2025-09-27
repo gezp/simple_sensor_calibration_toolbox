@@ -181,12 +181,12 @@ bool CalibParamManager::save(const std::string & file)
       ofs << "        frame_id: " << param.frame_id << std::endl;
       ofs << "        accel_matrix: " << to_string(param.accel_matrix) << std::endl;
       ofs << "        accel_offset: " << to_string(param.accel_offset) << std::endl;
-      ofs << "        accel_random_walk: " << to_string(param.accel_random_walk) << std::endl;
       ofs << "        accel_noise_density: " << to_string(param.accel_noise_density) << std::endl;
+      ofs << "        accel_random_walk: " << to_string(param.accel_random_walk) << std::endl;
       ofs << "        gyro_matrix: " << to_string(param.gyro_matrix) << std::endl;
       ofs << "        gyro_offset: " << to_string(param.gyro_offset) << std::endl;
-      ofs << "        gyro_random_walk: " << to_string(param.gyro_random_walk) << std::endl;
       ofs << "        gyro_noise_density: " << to_string(param.gyro_noise_density) << std::endl;
+      ofs << "        gyro_random_walk: " << to_string(param.gyro_random_walk) << std::endl;
       cnt++;
     }
   }
@@ -246,15 +246,15 @@ bool CalibParamManager::load(const std::string & file)
         param.frame_id = camera["frame_id"].as<std::string>();
         param.accel_matrix = to_Matrix3d(camera["accel_matrix"].as<std::vector<double>>());
         param.accel_offset = to_Vector3d(camera["accel_offset"].as<std::vector<double>>());
-        param.accel_random_walk =
-          to_Vector3d(camera["accel_random_walk"].as<std::vector<double>>());
         param.accel_noise_density =
           to_Vector3d(camera["accel_noise_density"].as<std::vector<double>>());
+        param.accel_random_walk =
+          to_Vector3d(camera["accel_random_walk"].as<std::vector<double>>());
         param.gyro_matrix = to_Matrix3d(camera["gyro_matrix"].as<std::vector<double>>());
         param.gyro_offset = to_Vector3d(camera["gyro_offset"].as<std::vector<double>>());
-        param.gyro_random_walk = to_Vector3d(camera["gyro_random_walk"].as<std::vector<double>>());
         param.gyro_noise_density =
           to_Vector3d(camera["gyro_noise_density"].as<std::vector<double>>());
+        param.gyro_random_walk = to_Vector3d(camera["gyro_random_walk"].as<std::vector<double>>());
         add_imu_intrinsic_param(param);
       } catch (std::exception & e) {
         error_message_ = std::string("invalid imu data [") + key + "]";
