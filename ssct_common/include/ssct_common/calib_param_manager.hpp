@@ -22,6 +22,7 @@
 #include <utility>
 
 #include "ssct_common/calib_param/camera_intrinsic_param.hpp"
+#include "ssct_common/calib_param/imu_intrinsic_param.hpp"
 #include "ssct_common/calib_param/extrinsic_param.hpp"
 
 namespace ssct_common
@@ -36,6 +37,10 @@ public:
   bool add_camera_intrinsic_param(const CameraIntrinsicParam & param);
   bool get_camera_intrinsic_param(const std::string & frame_id, CameraIntrinsicParam & param);
   void remove_camera_intrinsic_param(const std::string & frame_id);
+  // for imu intrinsic params
+  bool add_imu_intrinsic_param(const ImuIntrinsicParam & param);
+  bool get_imu_intrinsic_param(const std::string & frame_id, ImuIntrinsicParam & param);
+  void remove_imu_intrinsic_param(const std::string & frame_id);
   // for extrinsic params
   bool add_extrinsic_param(const ExtrinsicParam & param);
   bool add_extrinsic_param(
@@ -52,6 +57,7 @@ public:
 
 private:
   std::map<std::string, CameraIntrinsicParam> camera_intrinsic_params_;
+  std::map<std::string, ImuIntrinsicParam> imu_intrinsic_params_;
   std::map<std::string, ExtrinsicParam> extrinsic_params_;
   std::string error_message_;
 };
