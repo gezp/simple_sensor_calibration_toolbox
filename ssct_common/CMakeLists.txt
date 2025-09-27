@@ -50,7 +50,7 @@ add_library(${PROJECT_NAME} SHARED
   src/dummy_sensor/dummy_lidar_node.cpp
   src/dummy_sensor/dummy_imu_node.cpp
   # utils
-  src/calibration_params.cpp
+  src/calib_param_manager.cpp
   src/msg_utils.cpp
   src/tic_toc.cpp
 )

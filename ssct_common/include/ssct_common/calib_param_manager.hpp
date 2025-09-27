@@ -27,11 +27,11 @@
 namespace ssct_common
 {
 
-class CalibrationParams
+class CalibParamManager
 {
 public:
-  CalibrationParams() = default;
-  ~CalibrationParams() = default;
+  CalibParamManager() = default;
+  ~CalibParamManager() = default;
   // for camera intrinsic params
   bool add_camera_intrinsic_param(const CameraIntrinsicParam & param);
   bool get_camera_intrinsic_param(const std::string & frame_id, CameraIntrinsicParam & param);

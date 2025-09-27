@@ -17,7 +17,7 @@
 #include <sstream>
 #include <fstream>
 
-#include "ssct_common/calibration_params.hpp"
+#include "ssct_common/calib_param_manager.hpp"
 
 namespace ssct_common
 {
@@ -36,13 +36,13 @@ std::string to_string(const std::vector<double> & data)
   return ss.str();
 }
 
-bool CalibrationParams::add_camera_intrinsic_param(const CameraIntrinsicParam & param)
+bool CalibParamManager::add_camera_intrinsic_param(const CameraIntrinsicParam & param)
 {
   camera_intrinsic_params_[param.frame_id] = param;
   return true;
 }
 
-bool CalibrationParams::get_camera_intrinsic_param(
+bool CalibParamManager::get_camera_intrinsic_param(
   const std::string & frame_id, CameraIntrinsicParam & param)
 {
   auto it = camera_intrinsic_params_.find(frame_id);
@@ -53,7 +53,7 @@ bool CalibrationParams::get_camera_intrinsic_param(
   return true;
 }
 
-void CalibrationParams::remove_camera_intrinsic_param(const std::string & frame_id)
+void CalibParamManager::remove_camera_intrinsic_param(const std::string & frame_id)
 {
   auto it = camera_intrinsic_params_.find(frame_id);
   if (it != camera_intrinsic_params_.end()) {
@@ -61,14 +61,14 @@ void CalibrationParams::remove_camera_intrinsic_param(const std::string & frame_
   }
 }
 
-bool CalibrationParams::add_extrinsic_param(const ExtrinsicParam & param)
+bool CalibParamManager::add_extrinsic_param(const ExtrinsicParam & param)
 {
   std::string key = param.frame_id + "_tf_" + param.child_frame_id;
   extrinsic_params_[key] = param;
   return true;
 }
 
-bool CalibrationParams::add_extrinsic_param(
+bool CalibParamManager::add_extrinsic_param(
   const std::string & frame_id, const std::string & child_frame_id,
   const Eigen::Matrix4d & transform)
 {
@@ -79,7 +79,7 @@ bool CalibrationParams::add_extrinsic_param(
   return add_extrinsic_param(param);
 }
 
-bool CalibrationParams::get_extrinsic_param(
+bool CalibParamManager::get_extrinsic_param(
   const std::string & frame_id, const std::string & child_frame_id, ExtrinsicParam & param)
 {
   std::string key = frame_id + "_tf_" + child_frame_id;
@@ -91,7 +91,7 @@ bool CalibrationParams::get_extrinsic_param(
   return true;
 }
 
-void CalibrationParams::remove_extrinsic_param(
+void CalibParamManager::remove_extrinsic_param(
   const std::string & frame_id, const std::string & child_frame_id)
 {
   auto key = frame_id + "_tf_" + child_frame_id;
@@ -101,7 +101,7 @@ void CalibrationParams::remove_extrinsic_param(
   }
 }
 
-bool CalibrationParams::save(const std::string & file)
+bool CalibParamManager::save(const std::string & file)
 {
   std::ofstream ofs;
   ofs.open(file);
@@ -144,7 +144,7 @@ bool CalibrationParams::save(const std::string & file)
   return true;
 }
 
-bool CalibrationParams::load(const std::string & file)
+bool CalibParamManager::load(const std::string & file)
 {
   camera_intrinsic_params_.clear();
   extrinsic_params_.clear();
@@ -193,7 +193,7 @@ bool CalibrationParams::load(const std::string & file)
   return true;
 }
 
-std::string CalibrationParams::error_message()
+std::string CalibParamManager::error_message()
 {
   return error_message_;
 }

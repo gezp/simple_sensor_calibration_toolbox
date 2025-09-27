@@ -49,13 +49,13 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
     return;
   }
   // read calibration data
-  auto calibration_params = std::make_shared<ssct_common::CalibrationParams>();
-  calibration_params->load(initial_calibration_file_);
+  auto calib_param_manager = std::make_shared<ssct_common::CalibParamManager>();
+  calib_param_manager->load(initial_calibration_file_);
   ssct_common::ExtrinsicParam extrinsic_param;
-  calibration_params->get_extrinsic_param(camera_frame_id_, lidar_frame_id_, extrinsic_param);
+  calib_param_manager->get_extrinsic_param(camera_frame_id_, lidar_frame_id_, extrinsic_param);
   T_camera_lidar_ = extrinsic_param.transform;
   ssct_common::CameraIntrinsicParam param;
-  calibration_params->get_camera_intrinsic_param(camera_frame_id_, param);
+  calib_param_manager->get_camera_intrinsic_param(camera_frame_id_, param);
   if (param.intrinsics.size() != 4) {
     RCLCPP_FATAL(node_->get_logger(), "camera intrinsic in calibration file is invalid");
     return;
@@ -198,7 +198,7 @@ void CalibrationNode::clear_data()
   current_sensor_data_.time = -1;
 }
 
-bool CalibrationNode::update_calibration_params(const std::string & key, float value)
+bool CalibrationNode::update_calib_param_manager(const std::string & key, float value)
 {
   if (key == "x") {
     T_camera_lidar_(0, 3) += value;
@@ -237,7 +237,7 @@ void CalibrationNode::process_command(const ssct_interfaces::msg::CalibrationCom
     save_result();
   } else if (msg.command == ssct_interfaces::msg::CalibrationCommand::CUSTOM_KEY_VAULE) {
     // update calibration data
-    if (update_calibration_params(msg.key, msg.value)) {
+    if (update_calib_param_manager(msg.key, msg.value)) {
       state_ = ssct_interfaces::msg::CalibrationStatus::CALIBRATING;
     } else {
       RCLCPP_FATAL(node_->get_logger(), "undefined custom key value command: %s", msg.key.c_str());
@@ -263,17 +263,17 @@ void CalibrationNode::save_result()
     return;
   }
   //
-  auto calibration_params = std::make_shared<ssct_common::CalibrationParams>();
+  auto calib_param_manager = std::make_shared<ssct_common::CalibParamManager>();
   if (std::filesystem::exists(output_calibration_file_)) {
-    if (!calibration_params->load(output_calibration_file_)) {
+    if (!calib_param_manager->load(output_calibration_file_)) {
       RCLCPP_FATAL(
         node_->get_logger(), "failed to load existed calibration data, %s",
-        calibration_params->error_message().c_str());
+        calib_param_manager->error_message().c_str());
       return;
     }
   }
-  calibration_params->add_extrinsic_param(camera_frame_id_, lidar_frame_id_, T_camera_lidar_);
-  if (calibration_params->save(output_calibration_file_)) {
+  calib_param_manager->add_extrinsic_param(camera_frame_id_, lidar_frame_id_, T_camera_lidar_);
+  if (calib_param_manager->save(output_calibration_file_)) {
     RCLCPP_INFO(
       node_->get_logger(), "successed to save result: %s", output_calibration_file_.c_str());
   } else {
