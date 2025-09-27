@@ -21,12 +21,12 @@ imus:
         frame_id: imu1
         accel_matrix: [1, 0, 0, 0, 1, 0, 0, 0, 1]
         accel_offset: [0, 0, 0]
-        accel_random_walk: [4.33e-04, 4.33e-04, 4.33e-04]
         accel_noise_density: [1.86e-03, 1.86e-03, 1.86e-03]
+        accel_random_walk: [4.33e-04, 4.33e-04, 4.33e-04]
         gyro_matrix: [1, 0, 0, 0, 1, 0, 0, 0, 1]
         gyro_offset: [0, 0, 0]
-        gyro_random_walk: [2.66e-05, 2.66e-05, 2.66e-05]
         gyro_noise_density: [1.87e-04, 1.87e-04, 1.87e-04]
+        gyro_random_walk: [2.66e-05, 2.66e-05, 2.66e-05]
 transforms:
     transform1:
         frame_id: camera1
