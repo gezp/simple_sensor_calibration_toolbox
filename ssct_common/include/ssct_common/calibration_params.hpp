@@ -21,25 +21,11 @@
 #include <map>
 #include <utility>
 
+#include "ssct_common/calib_param/camera_intrinsic_param.hpp"
+#include "ssct_common/calib_param/extrinsic_param.hpp"
+
 namespace ssct_common
 {
-
-struct CameraIntrinsicParam
-{
-  std::string frame_id;
-  int height;
-  int width;
-  std::string type;
-  std::vector<double> intrinsics;
-  std::vector<double> distortion_coeffs;
-};
-
-struct ExtrinsicParam
-{
-  std::string frame_id;
-  std::string child_frame_id;
-  Eigen::Matrix4d transform;
-};
 
 class CalibrationParams
 {
@@ -47,15 +33,16 @@ public:
   CalibrationParams() = default;
   ~CalibrationParams() = default;
   // for camera intrinsic params
-  bool add_camera_intrinsic_param(const std::string & frame_id, const CameraIntrinsicParam & param);
+  bool add_camera_intrinsic_param(const CameraIntrinsicParam & param);
   bool get_camera_intrinsic_param(const std::string & frame_id, CameraIntrinsicParam & param);
   void remove_camera_intrinsic_param(const std::string & frame_id);
   // for extrinsic params
+  bool add_extrinsic_param(const ExtrinsicParam & param);
   bool add_extrinsic_param(
     const std::string & frame_id, const std::string & child_frame_id,
     const Eigen::Matrix4d & transform);
   bool get_extrinsic_param(
-    const std::string & frame_id, const std::string & child_frame_id, Eigen::Matrix4d & transform);
+    const std::string & frame_id, const std::string & child_frame_id, ExtrinsicParam & param);
   void remove_extrinsic_param(const std::string & frame_id, const std::string & child_frame_id);
   // save & load
   bool save(const std::string & file);

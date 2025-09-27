@@ -51,7 +51,9 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
   // read calibration data
   auto calibration_params = std::make_shared<ssct_common::CalibrationParams>();
   calibration_params->load(initial_calibration_file_);
-  calibration_params->get_extrinsic_param(camera_frame_id_, lidar_frame_id_, T_camera_lidar_);
+  ssct_common::ExtrinsicParam extrinsic_param;
+  calibration_params->get_extrinsic_param(camera_frame_id_, lidar_frame_id_, extrinsic_param);
+  T_camera_lidar_ = extrinsic_param.transform;
   ssct_common::CameraIntrinsicParam param;
   calibration_params->get_camera_intrinsic_param(camera_frame_id_, param);
   if (param.intrinsics.size() != 4) {

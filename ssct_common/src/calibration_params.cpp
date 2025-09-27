@@ -36,10 +36,9 @@ std::string to_string(const std::vector<double> & data)
   return ss.str();
 }
 
-bool CalibrationParams::add_camera_intrinsic_param(
-  const std::string & frame_id, const CameraIntrinsicParam & param)
+bool CalibrationParams::add_camera_intrinsic_param(const CameraIntrinsicParam & param)
 {
-  camera_intrinsic_params_[frame_id] = param;
+  camera_intrinsic_params_[param.frame_id] = param;
   return true;
 }
 
@@ -62,6 +61,13 @@ void CalibrationParams::remove_camera_intrinsic_param(const std::string & frame_
   }
 }
 
+bool CalibrationParams::add_extrinsic_param(const ExtrinsicParam & param)
+{
+  std::string key = param.frame_id + "_tf_" + param.child_frame_id;
+  extrinsic_params_[key] = param;
+  return true;
+}
+
 bool CalibrationParams::add_extrinsic_param(
   const std::string & frame_id, const std::string & child_frame_id,
   const Eigen::Matrix4d & transform)
@@ -70,20 +76,18 @@ bool CalibrationParams::add_extrinsic_param(
   param.frame_id = frame_id;
   param.child_frame_id = child_frame_id;
   param.transform = transform;
-  std::string key = frame_id + "_tf_" + child_frame_id;
-  extrinsic_params_[key] = param;
-  return true;
+  return add_extrinsic_param(param);
 }
 
 bool CalibrationParams::get_extrinsic_param(
-  const std::string & frame_id, const std::string & child_frame_id, Eigen::Matrix4d & transform)
+  const std::string & frame_id, const std::string & child_frame_id, ExtrinsicParam & param)
 {
   std::string key = frame_id + "_tf_" + child_frame_id;
   auto it = extrinsic_params_.find(key);
   if (it == extrinsic_params_.end()) {
     return false;
   }
-  transform = it->second.transform;
+  param = it->second;
   return true;
 }
 
@@ -158,7 +162,7 @@ bool CalibrationParams::load(const std::string & file)
         param.width = camera["width"].as<int>();
         param.intrinsics = camera["intrinsics"].as<std::vector<double>>();
         param.distortion_coeffs = camera["distortion_coeffs"].as<std::vector<double>>();
-        add_camera_intrinsic_param(param.frame_id, param);
+        add_camera_intrinsic_param(param);
       } catch (std::exception & e) {
         error_message_ = std::string("invalid camera data [") + key + "]";
         return false;

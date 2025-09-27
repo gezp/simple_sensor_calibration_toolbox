@@ -175,7 +175,7 @@ void CalibrationNode::save_result()
   param.width = image_size.width;
   param.intrinsics = calibrator_->get_intrinsics();
   param.distortion_coeffs = calibrator_->get_distortion_coeffs();
-  calibration_params_->add_camera_intrinsic_param(frame_id_, param);
+  calibration_params_->add_camera_intrinsic_param(param);
   if (calibration_params_->save(output_file_)) {
     RCLCPP_INFO(node_->get_logger(), "successed to save result: %s", output_file_.c_str());
   } else {
