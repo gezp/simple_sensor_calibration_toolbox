@@ -20,7 +20,7 @@ namespace ssct_common
 {
 struct ImuData
 {
-  double time = 0.0;
+  double time{0};
   Eigen::Vector3d angular_velocity;
   Eigen::Vector3d linear_acceleration;
 };

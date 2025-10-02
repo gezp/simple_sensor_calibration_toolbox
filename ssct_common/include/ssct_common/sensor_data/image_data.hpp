@@ -20,7 +20,7 @@ namespace ssct_common
 {
 struct ImageData
 {
-  double time;
+  double time {0};
   cv::Mat image;
 };
 
