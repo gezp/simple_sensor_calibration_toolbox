@@ -19,8 +19,6 @@
 namespace ssct_common
 {
 
-using MsgData = ImageSubscriber::MsgData;
-
 ImageSubscriber::ImageSubscriber(
   rclcpp::Node::SharedPtr node, std::string topic_name, size_t buffer_size, bool enable_compressed)
 {
@@ -29,7 +27,7 @@ ImageSubscriber::ImageSubscriber(
   enable_compressed_ = enable_compressed;
   if (enable_compressed) {
     auto msg_callback = [this](const sensor_msgs::msg::CompressedImage::SharedPtr msg) {
-        MsgData data;
+        ImageData data;
         data.time = rclcpp::Time(msg->header.stamp).seconds();
         data.image = cv_bridge::toCvCopy(*msg)->image;
         buffer_mutex_.lock();
@@ -43,7 +41,7 @@ ImageSubscriber::ImageSubscriber(
       topic_name, buffer_size, msg_callback);
   } else {
     auto msg_callback = [this](const sensor_msgs::msg::Image::SharedPtr msg) {
-        MsgData data;
+        ImageData data;
         data.time = rclcpp::Time(msg->header.stamp).seconds();
         data.image = cv_bridge::toCvCopy(*msg)->image;
         buffer_mutex_.lock();
@@ -66,11 +64,24 @@ const char * ImageSubscriber::get_topic_name()
     return subscriber_->get_topic_name();
   }
 }
-void ImageSubscriber::read(std::deque<MsgData> & output)
+
+void ImageSubscriber::read(std::deque<ImageData> & output)
 {
   buffer_mutex_.lock();
   if (buffer_.size() > 0) {
     output.insert(output.end(), buffer_.begin(), buffer_.end());
+    buffer_.clear();
+  }
+  buffer_mutex_.unlock();
+}
+
+void ImageSubscriber::read(std::map<double, ImageData> & output)
+{
+  buffer_mutex_.lock();
+  if (buffer_.size() > 0) {
+    for (auto & msg : buffer_) {
+      output.insert({msg.time, msg});
+    }
     buffer_.clear();
   }
   buffer_mutex_.unlock();

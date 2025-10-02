@@ -17,6 +17,7 @@
 #include <deque>
 #include <mutex>
 #include <string>
+#include <map>
 
 #include "opencv2/opencv.hpp"
 
@@ -24,23 +25,21 @@
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/msg/compressed_image.hpp"
 
+#include "ssct_common/sensor_data/image_data.hpp"
+
 namespace ssct_common
 {
 
 class ImageSubscriber
 {
 public:
-  struct MsgData
-  {
-    double time;
-    cv::Mat image;
-  };
   ImageSubscriber(
     rclcpp::Node::SharedPtr node, std::string topic_name, size_t buffer_size,
     bool enable_compressed = false);
 
   const char * get_topic_name();
-  void read(std::deque<MsgData> & output);
+  void read(std::deque<ImageData> & output);
+  void read(std::map<double, ImageData> & output);
   void clear();
 
 private:
@@ -48,7 +47,7 @@ private:
   bool enable_compressed_;
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subscriber_;
   rclcpp::Subscription<sensor_msgs::msg::CompressedImage>::SharedPtr compressed_subscriber_;
-  std::deque<MsgData> buffer_;
+  std::deque<ImageData> buffer_;
   size_t buffer_size_;
   std::mutex buffer_mutex_;
 };

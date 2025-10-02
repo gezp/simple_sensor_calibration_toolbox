@@ -32,12 +32,6 @@ namespace ssct_camera_intrinsic_calib
 
 class CalibrationNode
 {
-  struct SensorData
-  {
-    double time;
-    cv::Mat image;
-  };
-
 public:
   explicit CalibrationNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
   ~CalibrationNode();
@@ -71,7 +65,7 @@ private:
   std::unique_ptr<std::thread> run_thread_;
   bool exit_{false};
   // data
-  std::deque<SensorData> sensor_data_buffer_;
+  std::deque<ssct_common::ImageData> sensor_data_buffer_;
   std::shared_ptr<ssct_common::CalibParamManager> calib_param_manager_;
   uint8_t state_;
   bool success_{false};
