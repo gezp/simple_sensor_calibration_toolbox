@@ -131,20 +131,20 @@ bool CalibrationNode::get_nearest_image(double time, double & image_timestamp, c
   if (cur == image_buffer_.end()) {
     // the last
     image_timestamp = image_buffer_.rbegin()->first;
-    image = image_buffer_.rbegin()->second;
+    image = image_buffer_.rbegin()->second.image;
   } else if (cur == image_buffer_.begin()) {
     // the first
     image_timestamp = cur->first;
-    image = cur->second;
+    image = cur->second.image;
   } else {
     // choose between prev and cur
     auto prev = std::prev(cur);
     if (fabs(prev->first - time) < fabs(cur->first - time)) {
       image_timestamp = prev->first;
-      image = prev->second;
+      image = prev->second.image;
     } else {
       image_timestamp = cur->first;
-      image = cur->second;
+      image = cur->second.image;
     }
   }
   return true;
@@ -152,42 +152,36 @@ bool CalibrationNode::get_nearest_image(double time, double & image_timestamp, c
 
 bool CalibrationNode::read_data()
 {
-  pointcloud_sub_->read(pointcloud_msgs_);
-  std::deque<ssct_common::ImageSubscriber::MsgData> image_msgs;
-  image_sub_->read(image_msgs);
-  for (auto & msg : image_msgs) {
-    image_buffer_.insert({msg.time, msg.image});
-    if (image_buffer_.size() > max_image_buffer_size_) {
-      image_buffer_.erase(image_buffer_.begin());
-    }
+  pointcloud_sub_->read(pointcloud_buffer_);
+  image_sub_->read(image_buffer_);
+  while (image_buffer_.size() > max_image_buffer_size_) {
+    image_buffer_.erase(image_buffer_.begin());
   }
-  if (pointcloud_msgs_.empty() || image_buffer_.empty()) {
+  if (pointcloud_buffer_.empty() || image_buffer_.empty()) {
     return false;
   }
-  if (pointcloud_msgs_.front().time > image_buffer_.rbegin()->first) {
+  if (pointcloud_buffer_.front().time > image_buffer_.rbegin()->first) {
     return false;
   }
   double image_timestamp;
   cv::Mat image;
-  while (!pointcloud_msgs_.empty()) {
-    auto & pointcloud_msg = pointcloud_msgs_.front();
-    if (pointcloud_msg.time - last_sensor_time_ < 0) {
-      pointcloud_msgs_.pop_front();
-      continue;
-    }
-    // get nearest image
-    if (get_nearest_image(pointcloud_msgs_.front().time, image_timestamp, image)) {
-      if (fabs(pointcloud_msgs_.front().time - image_timestamp) < 0.05) {
-        current_sensor_data_.time = pointcloud_msgs_.front().time;
-        current_sensor_data_.pointcloud = pointcloud_msgs_.front().pointcloud;
-        current_sensor_data_.image = image;
-        last_sensor_time_ = current_sensor_data_.time;
-        pointcloud_msgs_.pop_front();
-        return true;
+  while (!pointcloud_buffer_.empty()) {
+    auto & pointcloud_msg = pointcloud_buffer_.front();
+    if (sensor_data_buffer_.empty() || pointcloud_msg.time > sensor_data_buffer_.back().time) {
+      // get nearest image
+      if (get_nearest_image(pointcloud_buffer_.front().time, image_timestamp, image)) {
+        if (fabs(pointcloud_buffer_.front().time - image_timestamp) < 0.05) {
+          SensorData data;
+          data.time = pointcloud_buffer_.front().time;
+          data.pointcloud = pointcloud_buffer_.front().pointcloud;
+          data.image = image;
+          sensor_data_buffer_.push_back(data);
+        }
       }
     }
+    pointcloud_buffer_.pop_front();
   }
-  return false;
+  return sensor_data_buffer_.size() > 0;
 }
 
 void CalibrationNode::clear_data()
@@ -195,7 +189,7 @@ void CalibrationNode::clear_data()
   pointcloud_sub_->clear();
   image_sub_->clear();
   image_buffer_.clear();
-  current_sensor_data_.time = -1;
+  sensor_data_buffer_.clear();
 }
 
 bool CalibrationNode::update_calib_param_manager(const std::string & key, float value)
@@ -294,17 +288,18 @@ bool CalibrationNode::run()
   }
   // calibration flow
   if (state_ == ssct_interfaces::msg::CalibrationStatus::CALIBRATING) {
-    if (current_sensor_data_.time < 0) {
-      if (!read_data()) {
-        return false;
+    if (sensor_data_buffer_.size() == 0) {
+      read_data();
+      if (sensor_data_buffer_.size() > 0) {
+        update_status_msg(state_, "finished to collect data.", 50);
       }
-      update_status_msg(state_, "finished to collect data.", 50);
     } else {
       // project pointcloud
-      cv::Mat img = current_sensor_data_.image.clone();
-      auto ok = lidar_projector_->project(
-        *current_sensor_data_.pointcloud, camera_intrinsic_, T_camera_lidar_, img);
-      debug_image_pub_->publish(img, current_sensor_data_.time);
+      auto & data = sensor_data_buffer_.back();
+      cv::Mat img = data.image.clone();
+      auto ok =
+        lidar_projector_->project(*data.pointcloud, camera_intrinsic_, T_camera_lidar_, img);
+      debug_image_pub_->publish(img, data.time);
       if (ok) {
         state_ = ssct_interfaces::msg::CalibrationStatus::SUCCESSED;
       } else {
@@ -312,8 +307,6 @@ bool CalibrationNode::run()
       }
       update_status_msg(state_, "finished to project pointcloud.", 100);
     }
-  } else {
-    return false;
   }
   return true;
 }

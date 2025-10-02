@@ -37,7 +37,7 @@ class CalibrationNode
 {
   struct SensorData
   {
-    double time{-1};
+    double time;
     cv::Mat image;
     pcl::PointCloud<pcl::PointXYZI>::Ptr pointcloud;
   };
@@ -80,11 +80,9 @@ private:
   std::unique_ptr<std::thread> run_thread_;
   bool exit_{false};
   // sensor data
-  std::deque<ssct_common::CloudSubscriber<pcl::PointXYZI>::MsgData> pointcloud_msgs_;
-  std::map<double, cv::Mat> image_buffer_;
+  std::deque<ssct_common::CloudSubscriber<pcl::PointXYZI>::MsgData> pointcloud_buffer_;
+  std::map<double, ssct_common::ImageData> image_buffer_;
   std::deque<SensorData> sensor_data_buffer_;
-  double last_sensor_time_;
-  SensorData current_sensor_data_;
   // camera intrinsic data
   std::vector<double> camera_intrinsic_;
   // extrinsic data

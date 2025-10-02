@@ -14,15 +14,14 @@
 
 #pragma once
 
-#include <Eigen/Dense>
+#include "opencv2/opencv.hpp"
 
 namespace ssct_common
 {
-struct ImuData
+struct ImageData
 {
-  double time{0};
-  Eigen::Vector3d angular_velocity;
-  Eigen::Vector3d linear_acceleration;
+  double time {0};
+  cv::Mat image;
 };
 
 }  // namespace ssct_common

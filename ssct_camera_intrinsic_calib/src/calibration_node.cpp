@@ -103,14 +103,11 @@ CalibrationNode::~CalibrationNode()
 
 void CalibrationNode::read_data()
 {
-  std::deque<ssct_common::ImageSubscriber::MsgData> msg_buffer;
-  image_sub_->read(msg_buffer);
+  std::deque<ssct_common::ImageData> msg_buffer;
+  image_sub_->read(sensor_data_buffer_);
   for (auto & msg : msg_buffer) {
     if (sensor_data_buffer_.empty() || msg.time - sensor_data_buffer_.back().time > 0.5) {
-      SensorData data;
-      data.time = msg.time;
-      data.image = msg.image;
-      sensor_data_buffer_.push_back(data);
+      sensor_data_buffer_.push_back(msg);
     }
   }
 }
