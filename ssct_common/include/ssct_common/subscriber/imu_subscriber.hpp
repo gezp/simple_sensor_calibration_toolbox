@@ -28,11 +28,10 @@ class ImuSubscriber
 public:
   ImuSubscriber(rclcpp::Node::SharedPtr node, std::string topic_name, size_t buff_size);
   ImuSubscriber() = default;
+
+  const char * get_topic_name();
   void read(std::deque<ImuData> & output);
   void clear();
-
-private:
-  void msg_callback(const sensor_msgs::msg::Imu::SharedPtr imu_msg_ptr);
 
 private:
   rclcpp::Node::SharedPtr node_;
