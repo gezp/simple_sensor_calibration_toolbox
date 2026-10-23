@@ -5,7 +5,7 @@
 * 相机内参
 * 传感器与传感器之间的外参
 
-其中相机内参保存在`cameras`列表中，传感器外参保存在`sensor_pair_transoforms`列表中。样例如下：
+其中相机内参保存在`cameras`列表中，传感器外参保存在`transforms`列表中。样例如下：
 
 ```yaml
 cameras:
@@ -32,12 +32,12 @@ transforms:
         frame_id: camera1
         child_frame_id: lidar1
         translation: [0.07008565, -0.01771023, 0.00399246]
-        rotation: [0.0 ,0.0 ,0.0 ,1.0] # x,y,z,w
+        rotation_xyzw: [0.0, 0.0, 0.0, 1.0]
     transform2:
         frame_id: lidar1
         child_frame_id: lidar2
         translation: [0.07008565, -0.01771023, 0.00399246]
-        rotation: [0.0 ,0.0 ,0.0 ,1.0] # x,y,z,w
+        rotation_xyzw: [0.0, 0.0, 0.0, 1.0]
 ```
 
 ## 相机内参说明
@@ -104,7 +104,10 @@ random_walk和noise_density是随机误差（不确定性误差）模型参数�
 * frame_id：传感器的frame id
 * child_frame_id：另一个传感器的frame id
 * translation：外参坐标变换中的平移部分
-* rotation：外参坐标变换中的旋转部分，采用四元数表示，顺序为`[x,y,z,w]`
+* rotation：外参坐标变换中的旋转部分，采用3x3旋转矩阵表示，按行优先展开为9个元素
+* rotation_xyzw：外参坐标变换中的旋转部分，采用四元数表示，顺序为`[x,y,z,w]`
+
+读取时若同时存在`rotation`和`rotation_xyzw`，优先使用`rotation_xyzw`；保存结果只写`rotation_xyzw`。
 
 这里标定出的坐标变换表示为 $T_\text{frame id - child frame id}$，等价以下两种说法：
 
