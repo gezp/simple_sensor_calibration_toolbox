@@ -16,6 +16,7 @@
 
 #include <sstream>
 #include <fstream>
+#include <stdexcept>
 
 #include "ssct_common/calib_param_manager.hpp"
 
@@ -197,12 +198,12 @@ bool CalibParamManager::save(const std::string & file)
       auto t = param.transform.block<3, 1>(0, 3);
       std::vector<double> translation{t.x(), t.y(), t.z()};
       auto q = Eigen::Quaterniond(param.transform.block<3, 3>(0, 0));
-      std::vector<double> rotation{q.x(), q.y(), q.z(), q.w()};
+      std::vector<double> rotation_xyzw{q.x(), q.y(), q.z(), q.w()};
       ofs << "    transform" << cnt << ":" << std::endl;
       ofs << "        frame_id: " << param.frame_id << std::endl;
       ofs << "        child_frame_id: " << param.child_frame_id << std::endl;
       ofs << "        translation: " << to_string(translation) << std::endl;
-      ofs << "        rotation: " << to_string(rotation) << std::endl;
+      ofs << "        rotation_xyzw: " << to_string(rotation_xyzw) << std::endl;
       cnt++;
     }
   }
@@ -272,10 +273,24 @@ bool CalibParamManager::load(const std::string & file)
         auto frame_id = transform_node["frame_id"].as<std::string>();
         auto child_frame_id = transform_node["child_frame_id"].as<std::string>();
         auto t = transform_node["translation"].as<std::vector<double>>();
-        auto r = transform_node["rotation"].as<std::vector<double>>();
         Eigen::Matrix4d transform = Eigen::Matrix4d::Identity();
         transform.block<3, 1>(0, 3) = Eigen::Vector3d(t[0], t[1], t[2]);
-        transform.block<3, 3>(0, 0) = Eigen::Quaterniond(r[3], r[0], r[1], r[2]).toRotationMatrix();
+        auto rotation_xyzw = transform_node["rotation_xyzw"];
+        if (rotation_xyzw.IsDefined()) {
+          auto q = rotation_xyzw.as<std::vector<double>>();
+          if (q.size() != 4) {
+            throw std::runtime_error("rotation_xyzw must have 4 elements");
+          }
+          transform.block<3, 3>(0, 0) =
+            Eigen::Quaterniond(q[3], q[0], q[1], q[2]).toRotationMatrix();
+        } else {
+          auto r = transform_node["rotation"].as<std::vector<double>>();
+          if (r.size() != 9) {
+            throw std::runtime_error("rotation must have 9 elements");
+          }
+          Eigen::Matrix<double, 3, 3, Eigen::RowMajor> rotation(r.data());
+          transform.block<3, 3>(0, 0) = rotation;
+        }
         add_extrinsic_param(frame_id, child_frame_id, transform);
       } catch (std::exception & e) {
         error_message_ = std::string("invalid transform [") + key + "]";
