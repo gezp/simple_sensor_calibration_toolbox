@@ -21,50 +21,50 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     data_dir = os.path.join(
-        os.environ["HOME"], "calibration_data", "SensorsCalibration"
+        os.environ['HOME'], 'calibration_data', 'SensorsCalibration'
     )
-    camera_data_dir = os.path.join(data_dir, "camera_intrinsic")
+    camera_data_dir = os.path.join(data_dir, 'camera_intrinsic')
     pkg_ssct_camera_intrinsic_calib = get_package_share_directory(
-        "ssct_camera_intrinsic_calib"
+        'ssct_camera_intrinsic_calib'
     )
     calibrator_config = os.path.join(
-        pkg_ssct_camera_intrinsic_calib, "config", "calibrator.yaml"
+        pkg_ssct_camera_intrinsic_calib, 'config', 'calibrator.yaml'
     )
     calibration_result = os.path.join(
-        os.environ["HOME"], "calibration_data", "result.yaml"
+        os.environ['HOME'], 'calibration_data', 'result.yaml'
     )
     dummy_camera_node = Node(
-        name="dummy_camera_node",
-        package="ssct_common",
-        executable="dummy_camera_node",
+        name='dummy_camera_node',
+        package='ssct_common',
+        executable='dummy_camera_node',
         parameters=[
             {
-                "data_dir": camera_data_dir,
-                "frame_id": "center_camera",
-                "rate": 1.0,
+                'data_dir': camera_data_dir,
+                'frame_id': 'center_camera',
+                'rate': 1.0,
             }
         ],
-        output="screen",
+        output='screen',
     )
     calibration_node = Node(
-        name="camera_intrisic_calibration_node",
-        package="ssct_camera_intrinsic_calib",
-        executable="calibration_node",
+        name='camera_intrisic_calibration_node',
+        package='ssct_camera_intrinsic_calib',
+        executable='calibration_node',
         parameters=[
             {
-                "frame_id": "center_camera",
-                "calibrator_config": calibrator_config,
-                "output_file": calibration_result,
+                'frame_id': 'center_camera',
+                'calibrator_config': calibrator_config,
+                'output_file': calibration_result,
             }
         ],
-        remappings=[("image", "/sensor/center_camera/image")],
-        output="screen",
+        remappings=[('image', '/sensor/center_camera/image')],
+        output='screen',
     )
     calibration_client = Node(
-        name="calibration_client",
-        package="ssct_camera_intrinsic_calib",
-        executable="calibration_client.py",
-        output="screen",
+        name='calibration_client',
+        package='ssct_camera_intrinsic_calib',
+        executable='calibration_client.py',
+        output='screen',
     )
     ld = LaunchDescription()
     ld.add_action(dummy_camera_node)
