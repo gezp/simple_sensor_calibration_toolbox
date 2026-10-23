@@ -34,3 +34,8 @@ jobs:
       - name: Test ssct_lidar_cam_manual_calib
         run: |
           /usr/bin/bash .github/workflows/colcon_test.sh ssct_lidar_cam_manual_calib
+      - name: Show test failures
+        if: failure()
+        run: |
+          cd ros_ws
+          colcon test-result --verbose 2>&1 | head -c 50000 | python3 -c "import sys, urllib.parse; print('::error::' + urllib.parse.quote(sys.stdin.read(), safe=''))"
