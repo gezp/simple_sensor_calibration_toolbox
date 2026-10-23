@@ -13,30 +13,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import rclpy
 import sys
 import threading
 
-from PySide6.QtWidgets import (
-    QApplication,
-    QWidget,
-    QMessageBox,
-    QHBoxLayout,
-    QVBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QComboBox,
-    QTextBrowser,
-)
-from PySide6.QtCore import Signal
-from PySide6.QtGui import QPixmap, QImage
-
 import cv2
 from cv_bridge import CvBridge
+from PySide6.QtCore import Signal
+from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QTextBrowser,
+    QVBoxLayout,
+    QWidget,
+)
+import rclpy
+import sensor_msgs
 
 from ssct_interfaces.msg import CalibrationCommand, CalibrationStatus
-import sensor_msgs
 
 
 class CalibrationClient(QWidget):
@@ -50,7 +49,7 @@ class CalibrationClient(QWidget):
         self.recv_calibration_status.connect(self.update_calibration_status)
         self.recv_debug_image.connect(self.update_debug_image)
         # ros node
-        self.ros_node = rclpy.create_node("calibration_client")
+        self.ros_node = rclpy.create_node('calibration_client')
         self.status_sub = None
         self.debug_image_sub = None
         self.cmd_pub = None
@@ -72,47 +71,47 @@ class CalibrationClient(QWidget):
         self.comboBox = QComboBox()
         self.comboBox.setMinimumWidth(500)
         layout_topic.addWidget(self.comboBox)
-        self.btn_refresh = QPushButton("refresh")
+        self.btn_refresh = QPushButton('refresh')
         self.btn_refresh.clicked.connect(self.btn_refresh_callback)
         layout_topic.addWidget(self.btn_refresh)
         layout_topic.addStretch()
         layout_topic.addSpacing(50)
-        self.btn_connect = QPushButton("connect")
+        self.btn_connect = QPushButton('connect')
         self.btn_connect.clicked.connect(self.btn_connect_callback)
         layout_topic.addWidget(self.btn_connect)
         layout.addLayout(layout_topic)
         # calibration type layout
         layout_calibraion_type = QHBoxLayout()
-        layout_calibraion_type.addWidget(QLabel("calibration type:"))
-        self.label_calibraion_type = QLineEdit("unknown")
+        layout_calibraion_type.addWidget(QLabel('calibration type:'))
+        self.label_calibraion_type = QLineEdit('unknown')
         self.label_calibraion_type.setReadOnly(True)
         layout_calibraion_type.addWidget(self.label_calibraion_type)
         layout_calibraion_type.addStretch()
         layout.addLayout(layout_calibraion_type)
         # frame id layout
         layout_frame_id = QHBoxLayout()
-        layout_frame_id.addWidget(QLabel("frame id:"))
-        self.label_frame_id = QLineEdit("unknown")
+        layout_frame_id.addWidget(QLabel('frame id:'))
+        self.label_frame_id = QLineEdit('unknown')
         self.label_frame_id.setReadOnly(True)
         layout_frame_id.addWidget(self.label_frame_id)
         layout_frame_id.addSpacing(50)
-        layout_frame_id.addWidget(QLabel("child frame id:"))
-        self.label_child_frame_id = QLineEdit("unknown")
+        layout_frame_id.addWidget(QLabel('child frame id:'))
+        self.label_child_frame_id = QLineEdit('unknown')
         self.label_child_frame_id.setReadOnly(True)
         layout_frame_id.addWidget(self.label_child_frame_id)
         layout_frame_id.addStretch()
         layout.addLayout(layout_frame_id)
         # debug image layout
-        layout.addWidget(QLabel("debug image:"))
+        layout.addWidget(QLabel('debug image:'))
         self.label_debug_image = QLabel()
-        self.label_debug_image.setStyleSheet("QLabel { background-color: black; }")
+        self.label_debug_image.setStyleSheet('QLabel { background-color: black; }')
         self.label_debug_image.setFixedHeight(300)
         self.label_debug_image.setScaledContents(True)
         layout.addWidget(self.label_debug_image)
         # status layout
         layout_calibration_status = QHBoxLayout()
-        layout_calibration_status.addWidget(QLabel("calibration status:"))
-        self.label_calibration_status = QLineEdit("unknown")
+        layout_calibration_status.addWidget(QLabel('calibration status:'))
+        self.label_calibration_status = QLineEdit('unknown')
         self.label_calibration_status.setReadOnly(True)
         layout_calibration_status.addWidget(self.label_calibration_status)
         layout_calibration_status.addStretch()
@@ -121,19 +120,19 @@ class CalibrationClient(QWidget):
         self.status_info_browser = QTextBrowser()
         layout.addWidget(self.status_info_browser)
         # commnad layout
-        layout.addWidget(QLabel("calibration command:"))
+        layout.addWidget(QLabel('calibration command:'))
         self.btn_commands = []
-        btn_command_start = QPushButton("start")
+        btn_command_start = QPushButton('start')
         btn_command_start.clicked.connect(
             lambda: self.send_command(CalibrationCommand.START)
         )
         self.btn_commands.append(btn_command_start)
-        btn_command_reset = QPushButton("reset")
+        btn_command_reset = QPushButton('reset')
         btn_command_reset.clicked.connect(
             lambda: self.send_command(CalibrationCommand.RESET)
         )
         self.btn_commands.append(btn_command_reset)
-        btn_command_save_result = QPushButton("save result")
+        btn_command_save_result = QPushButton('save result')
         btn_command_save_result.clicked.connect(
             lambda: self.send_command(CalibrationCommand.SAVE)
         )
@@ -149,7 +148,7 @@ class CalibrationClient(QWidget):
         topics = self.ros_node.get_topic_names_and_types()
         valid_topics = []
         for data in topics:
-            if data[1][0] == "ssct_interfaces/msg/CalibrationStatus":
+            if data[1][0] == 'ssct_interfaces/msg/CalibrationStatus':
                 valid_topics.append(data[0])
         self.comboBox.clear()
         self.comboBox.addItems(valid_topics)
@@ -163,12 +162,12 @@ class CalibrationClient(QWidget):
     def connect_status(self):
         if self.comboBox.currentIndex() == -1:
             QMessageBox.critical(
-                self, "Error", "no calibration status topics!", QMessageBox.Ok
+                self, 'Error', 'no calibration status topics!', QMessageBox.Ok
             )
             return
         self.comboBox.setEnabled(False)
         self.btn_refresh.setEnabled(False)
-        self.btn_connect.setText("disconnect")
+        self.btn_connect.setText('disconnect')
         self.status_sub = self.ros_node.create_subscription(
             CalibrationStatus,
             self.comboBox.currentText(),
@@ -180,7 +179,7 @@ class CalibrationClient(QWidget):
     def disconnect_status(self):
         self.comboBox.setEnabled(True)
         self.btn_refresh.setEnabled(True)
-        self.btn_connect.setText("connect")
+        self.btn_connect.setText('connect')
         if self.status_sub:
             self.ros_node.destroy_subscription(self.status_sub)
         self.status_sub = None
@@ -207,10 +206,10 @@ class CalibrationClient(QWidget):
         for btn in self.btn_commands:
             btn.setEnabled(True)
         self.initialized = True
-        if msg.calibration_type != "ssct_camera_intrinsic_calib":
+        if msg.calibration_type != 'ssct_camera_intrinsic_calib':
             return
         # debug image
-        debug_topic = "/calibration/camera_intrinsic/" + msg.frame_id + "/debug_image"
+        debug_topic = '/calibration/camera_intrinsic/' + msg.frame_id + '/debug_image'
         self.debug_image_sub = self.ros_node.create_subscription(
             sensor_msgs.msg.Image, debug_topic, self.debug_image_callback, 10
         )
@@ -235,20 +234,20 @@ class CalibrationClient(QWidget):
 
     def update_calibration_state(self, msg: CalibrationStatus):
         if msg.state == CalibrationStatus.UNKNOWN:
-            self.label_calibration_status.setText("unknown")
+            self.label_calibration_status.setText('unknown')
         elif msg.state == CalibrationStatus.READY:
-            self.label_calibration_status.setText("ready")
+            self.label_calibration_status.setText('ready')
         elif msg.state == CalibrationStatus.CALIBRATING:
-            self.label_calibration_status.setText("calibrating")
+            self.label_calibration_status.setText('calibrating')
         elif msg.state == CalibrationStatus.SUCCESSED:
-            self.label_calibration_status.setText("done[successed]")
+            self.label_calibration_status.setText('done[successed]')
         elif msg.state == CalibrationStatus.FAILED:
-            self.label_calibration_status.setText("done[failed]")
+            self.label_calibration_status.setText('done[failed]')
         else:
-            self.label_calibration_status.setText("undefined")
+            self.label_calibration_status.setText('undefined')
 
     def debug_image_callback(self, msg: sensor_msgs.msg.Image):
-        img = self.image_bridge.imgmsg_to_cv2(msg, "bgr8")
+        img = self.image_bridge.imgmsg_to_cv2(msg, 'bgr8')
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         scale = 300 / img.shape[0]
         img = cv2.resize(img, (int(img.shape[0] * scale), int(img.shape[1] * scale)))
@@ -262,7 +261,7 @@ class CalibrationClient(QWidget):
         self.label_debug_image.setPixmap(img)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     rclpy.init()
     app = QApplication(sys.argv)
     window = CalibrationClient()

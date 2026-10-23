@@ -1,27 +1,27 @@
 name: Build and Test
 on:
   push:
-    branches: [ humble ]
+    branches: [ jazzy ]
   pull_request:
-    branches: [ humble ]
+    branches: [ jazzy ]
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     container:
-      image: rostooling/setup-ros-docker:ubuntu-jammy-ros-humble-desktop-latest
+      image: rostooling/setup-ros-docker:ubuntu-noble-ros-jazzy-desktop-latest
     steps:
       - name: Check out
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Pre install
         run: |
-          /usr/bin/bash -c "apt-get update && apt-get install -y libunwind-dev libceres-dev"
+          /usr/bin/bash -c "apt-get update && apt-get install -y libunwind-dev libceres-dev libopencv-dev"
       - name: Build
-        uses: ros-tooling/action-ros-ci@v0.3
+        uses: ros-tooling/action-ros-ci@v0.4
         with:
-          target-ros2-distro: humble
+          target-ros2-distro: jazzy
           skip-tests: true
-      - name: Remove flake8-quotes flake8-import-order for linter
-        run: /usr/bin/bash -c "apt-get remove -y python3-flake8-quotes python3-flake8-import-order"
       - name: Test ssct_interfaces
         run: |
           /usr/bin/bash .github/workflows/colcon_test.sh ssct_interfaces
@@ -34,3 +34,8 @@ jobs:
       - name: Test ssct_lidar_cam_manual_calib
         run: |
           /usr/bin/bash .github/workflows/colcon_test.sh ssct_lidar_cam_manual_calib
+      - name: Show test failures
+        if: failure()
+        run: |
+          cd ros_ws
+          colcon test-result --verbose 2>&1 | head -c 50000 | python3 -c "import sys, urllib.parse; print('::error::' + urllib.parse.quote(sys.stdin.read(), safe=''))"

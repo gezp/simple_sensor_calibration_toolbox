@@ -19,42 +19,42 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    data_dir = os.path.join(os.environ["HOME"], "calibration_data")
-    lidar_data_dir = os.path.join(data_dir, "SensorsCalibration", "lidar2camera", "lidar")
-    camera_data_dir = os.path.join(data_dir, "SensorsCalibration", "camera_intrinsic")
-    imu_data_file = os.path.join(data_dir, "imu_data", "uncalibrated_imu_data.csv")
+    data_dir = os.path.join(os.environ['HOME'], 'calibration_data')
+    lidar_data_dir = os.path.join(data_dir, 'SensorsCalibration', 'lidar2camera', 'lidar')
+    camera_data_dir = os.path.join(data_dir, 'SensorsCalibration', 'camera_intrinsic')
+    imu_data_file = os.path.join(data_dir, 'imu_data', 'uncalibrated_imu_data.csv')
     dummy_lidar_node = Node(
-        name="dummy_lidar_node",
-        package="ssct_common",
-        executable="dummy_lidar_node",
-        parameters=[{"data_dir": lidar_data_dir, "frame_id": "top_center_lidar"}],
-        output="screen",
+        name='dummy_lidar_node',
+        package='ssct_common',
+        executable='dummy_lidar_node',
+        parameters=[{'data_dir': lidar_data_dir, 'frame_id': 'top_center_lidar'}],
+        output='screen',
     )
     dummy_camera_node = Node(
-        name="dummy_camera_node",
-        package="ssct_common",
-        executable="dummy_camera_node",
+        name='dummy_camera_node',
+        package='ssct_common',
+        executable='dummy_camera_node',
         parameters=[
             {
-                "data_dir": camera_data_dir,
-                "frame_id": "center_camera",
-                "rate": 1.0,
+                'data_dir': camera_data_dir,
+                'frame_id': 'center_camera',
+                'rate': 1.0,
             }
         ],
-        output="screen",
+        output='screen',
     )
     dummy_imu_node = Node(
-        name="dummy_imu_node",
-        package="ssct_common",
-        executable="dummy_imu_node",
+        name='dummy_imu_node',
+        package='ssct_common',
+        executable='dummy_imu_node',
         parameters=[
             {
-                "data_file": imu_data_file,
-                "frame_id": "center_imu",
-                "rate": 100.0,
+                'data_file': imu_data_file,
+                'frame_id': 'center_imu',
+                'rate': 100.0,
             }
         ],
-        output="screen",
+        output='screen',
     )
     ld = LaunchDescription()
     ld.add_action(dummy_lidar_node)

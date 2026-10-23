@@ -14,7 +14,7 @@
 
 #include "ssct_common/publisher/image_publisher.hpp"
 
-#include "cv_bridge/cv_bridge.h"
+#include "cv_bridge/cv_bridge.hpp"
 
 namespace ssct_common
 {

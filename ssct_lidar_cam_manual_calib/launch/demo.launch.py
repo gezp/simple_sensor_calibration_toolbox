@@ -21,72 +21,72 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     data_dir = os.path.join(
-        os.environ["HOME"], "calibration_data", "SensorsCalibration"
+        os.environ['HOME'], 'calibration_data', 'SensorsCalibration'
     )
-    lidar_data_dir = os.path.join(data_dir, "lidar2camera", "lidar")
-    camera_data_dir = os.path.join(data_dir, "lidar2camera", "camera")
+    lidar_data_dir = os.path.join(data_dir, 'lidar2camera', 'lidar')
+    camera_data_dir = os.path.join(data_dir, 'lidar2camera', 'camera')
     pkg_ssct_lidar_cam_manual_calib = get_package_share_directory(
-        "ssct_lidar_cam_manual_calib"
+        'ssct_lidar_cam_manual_calib'
     )
     calibrator_config = os.path.join(
-        pkg_ssct_lidar_cam_manual_calib, "config", "calibrator.yaml"
+        pkg_ssct_lidar_cam_manual_calib, 'config', 'calibrator.yaml'
     )
     initial_calibration = os.path.join(
-        pkg_ssct_lidar_cam_manual_calib, "config", "initial_calibration.yaml"
+        pkg_ssct_lidar_cam_manual_calib, 'config', 'initial_calibration.yaml'
     )
     output_calibration = os.path.join(
-        os.environ["HOME"], "calibration_data", "result.yaml"
+        os.environ['HOME'], 'calibration_data', 'result.yaml'
     )
     dummy_lidar_node = Node(
-        name="dummy_lidar_node",
-        package="ssct_common",
-        executable="dummy_lidar_node",
+        name='dummy_lidar_node',
+        package='ssct_common',
+        executable='dummy_lidar_node',
         parameters=[
             {
-                "data_dir": lidar_data_dir,
-                "frame_id": "top_center_lidar",
-                "rate": 1.0,
+                'data_dir': lidar_data_dir,
+                'frame_id': 'top_center_lidar',
+                'rate': 1.0,
             }
         ],
-        output="screen",
+        output='screen',
     )
     dummy_camera_node = Node(
-        name="dummy_camera_node",
-        package="ssct_common",
-        executable="dummy_camera_node",
+        name='dummy_camera_node',
+        package='ssct_common',
+        executable='dummy_camera_node',
         parameters=[
             {
-                "data_dir": camera_data_dir,
-                "frame_id": "center_camera",
-                "rate": 1.0,
+                'data_dir': camera_data_dir,
+                'frame_id': 'center_camera',
+                'rate': 1.0,
             }
         ],
-        output="screen",
+        output='screen',
     )
     calibration_node = Node(
-        name="lidar_camera_calibration_node",
-        package="ssct_lidar_cam_manual_calib",
-        executable="calibration_node",
+        name='lidar_camera_calibration_node',
+        package='ssct_lidar_cam_manual_calib',
+        executable='calibration_node',
         parameters=[
             {
-                "camera_frame_id": "center_camera",
-                "lidar_frame_id": "top_center_lidar",
-                "calibrator_config": calibrator_config,
-                "initial_calibration_file": initial_calibration,
-                "output_calibration_file": output_calibration,
+                'camera_frame_id': 'center_camera',
+                'lidar_frame_id': 'top_center_lidar',
+                'calibrator_config': calibrator_config,
+                'initial_calibration_file': initial_calibration,
+                'output_calibration_file': output_calibration,
             }
         ],
         remappings=[
-            ("image", "/sensor/center_camera/image"),
-            ("pointcloud", "/sensor/top_center_lidar/pointcloud"),
+            ('image', '/sensor/center_camera/image'),
+            ('pointcloud', '/sensor/top_center_lidar/pointcloud'),
         ],
-        output="screen",
+        output='screen',
     )
     calibration_client = Node(
-        name="calibration_client",
-        package="ssct_lidar_cam_manual_calib",
-        executable="calibration_client.py",
-        output="screen",
+        name='calibration_client',
+        package='ssct_lidar_cam_manual_calib',
+        executable='calibration_client.py',
+        output='screen',
     )
     ld = LaunchDescription()
     ld.add_action(dummy_lidar_node)

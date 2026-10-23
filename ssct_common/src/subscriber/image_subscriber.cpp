@@ -14,7 +14,7 @@
 
 #include "ssct_common/subscriber/image_subscriber.hpp"
 
-#include "cv_bridge/cv_bridge.h"
+#include "cv_bridge/cv_bridge.hpp"
 
 namespace ssct_common
 {
