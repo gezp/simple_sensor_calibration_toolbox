@@ -5,7 +5,7 @@
 * 相机内参
 * 传感器与传感器之间的外参
 
-其中相机内参保存在`cameras`列表中，传感器外参保存在`sensor_pair_transoforms`列表中。样例如下：
+其中相机内参保存在`cameras`列表中，传感器外参保存在`transforms`列表中。样例如下：
 
 ```yaml
 cameras:
