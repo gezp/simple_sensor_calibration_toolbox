@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SSCT 标定</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">SSCT <span>标定</span></div>
+    <select id="mode" aria-label="标定模式"></select>
+    <span class="spacer"></span>
+    <div id="topic-wrap" class="topic-wrap" hidden>
+      <span class="field-label">标定topic:</span>
+      <output id="topic" class="topic"></output>
+    </div>
+    <button id="connect">connect</button>
+  </header>
+
+  <main id="panel" class="panel-host"></main>
+
+  <dialog id="topic-dialog" aria-labelledby="topic-dialog-title">
+    <h2 id="topic-dialog-title">选择标定 topic</h2>
+    <div class="topic-list" id="topic-list"></div>
+    <div class="dialog-actions">
+      <button id="dialog-refresh" class="ghost" type="button">refresh</button>
+      <span class="spacer"></span>
+      <button id="dialog-cancel" type="button">cancel</button>
+      <button id="dialog-connect" class="primary" type="button">connect</button>
+    </div>
+  </dialog>
+
+  <script type="module" src="/static/app.js"></script>
+</body>
+</html>

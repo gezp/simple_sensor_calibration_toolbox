@@ -24,17 +24,15 @@ mkdir ~/calibration_data
 ros2 launch ssct_camera_intrinsic_calib demo.launch.py 
 ```
 
-* 默认情况下需要使用GUI客户端启动标定流程，如果想要标定程序自动开启标定流程并保存结果，并不使用GUI，可设置`calibration_node`的参数`autostart`为`True`。
+* 默认情况下需要使用 Web 客户端启动标定流程，如果想要标定程序自动开启标定流程并保存结果，并在浏览器中查看进度，可设置`calibration_node`的参数`autostart`为`True`。
 * 标定的配置文件为`config/calibrator.yaml`，可以修改标定板的配置，相机的图像尺寸，误差阈值等参数。
-* 标定结果保存在`~/calibration_data/esult.yaml`中。
+* 标定结果保存在`~/calibration_data/result.yaml`中。
 
-运行标定GUI客户端
+另开终端启动 Web 客户端，浏览器打开 `http://<host>:8080`：
 
 ```bash
-ros2 run ssct_camera_intrinsic_calib calibration_client.py
+ros2 launch ssct_calib_client web_client.launch.py mode:=camera_intrinsic
 ```
-
-* 基于Qt的图形化界面，可以查看标定过程的标定信息，以及控制标定程序的流程。
 
 ## Reference
 
