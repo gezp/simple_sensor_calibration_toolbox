@@ -1,6 +1,3 @@
-# timestamp
-builtin_interfaces/Time timestamp
-
 # frame id
 string frame_id
 
