@@ -300,6 +300,19 @@ canvas.cloud {
   cursor: grab;
 }
 
+.viewport.lidar-cam-viewport {
+  aspect-ratio: auto;
+  max-height: none;
+  align-items: flex-start;
+}
+
+canvas.lidar-cam-canvas {
+  display: block;
+  width: auto;
+  height: 28vh;
+  max-width: 100%;
+}
+
 /* ---- panel: status ---- */
 
 .statusline {
@@ -327,6 +340,31 @@ canvas.cloud {
 .state-field.state-failed {
   color: var(--err);
   border-color: var(--err);
+}
+
+/* ---- panel: display options ---- */
+
+.projection {
+  display: grid;
+  gap: clamp(10px, 1.4vw, 18px);
+}
+
+.display-options {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.display-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.display-options input[type="range"] {
+  width: 120px;
+  padding: 0;
 }
 
 /* ---- panel: info ---- */
@@ -359,6 +397,38 @@ canvas.cloud {
   gap: 10px;
 }
 
+.extrinsic {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.extrinsic-group {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.extrinsic-value {
+  flex: 1 1 240px;
+  min-width: 0;
+  min-height: 32px;
+  padding: 6px 10px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .row {
   display: flex;
   gap: 8px;
@@ -372,6 +442,44 @@ canvas.cloud {
   border-radius: 8px;
   padding: 10px 12px;
   background: var(--panel);
+}
+
+.extrinsic-controls {
+  display: grid;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.extrinsic-steps {
+  align-items: center;
+  gap: 28px;
+}
+
+.extrinsic-steps button {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.input-unit {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.extrinsic-steps .input-unit input {
+  width: 90px;
+  padding-right: 36px;
+}
+
+.input-unit .unit {
+  position: absolute;
+  right: 9px;
+  color: var(--muted);
+  font-size: 12px;
+  pointer-events: none;
 }
 
 .axis-head {

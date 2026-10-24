@@ -35,9 +35,15 @@ from aiohttp import WSMsgType, web
 from ament_index_python.packages import get_package_share_directory
 from cv_bridge import CvBridge
 from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import Image, PointCloud2
 from sensor_msgs_py import point_cloud2
-from ssct_interfaces.msg import CalibrationCommand, CalibrationStatus
+from ssct_interfaces.msg import (
+    CalibrationCommand,
+    CalibrationParams,
+    CalibrationStatus,
+    ExtrinsicParam,
+)
 
 STATUS_TYPE = 'ssct_interfaces/msg/CalibrationStatus'
 IMAGE_TYPE = 'sensor_msgs/msg/Image'
@@ -75,35 +81,91 @@ def status_dict(msg):
 MODES = [
     {'id': 'generic', 'url': '/static/modes/generic/index.js'},
     {'id': 'camera_intrinsic', 'url': '/static/modes/camera_intrinsic/index.js'},
+    {'id': 'lidar_cam_manual', 'url': '/static/modes/lidar_cam_manual/index.js'},
 ]
 
+PARAMS_QOS = QoSProfile(
+    depth=1,
+    history=HistoryPolicy.KEEP_LAST,
+    reliability=ReliabilityPolicy.RELIABLE,
+    durability=DurabilityPolicy.TRANSIENT_LOCAL,
+)
 
-def image_topic_of(status_topic):
+
+def status_prefix(status_topic):
     suffix = '/status'
-    if status_topic.endswith(suffix):
-        return status_topic[:-len(suffix)] + '/debug_image'
+    if status_topic and status_topic.endswith(suffix):
+        return status_topic[:-len(suffix)]
     return None
 
 
+def params_dict(msg):
+    return {
+        'type': 'params',
+        'camera': [
+            {
+                'frame_id': p.frame_id,
+                'width': int(p.width),
+                'height': int(p.height),
+                'model': p.type,
+                'intrinsics': [float(v) for v in p.intrinsics],
+                'distortion_coeffs': [float(v) for v in p.distortion_coeffs],
+            }
+            for p in msg.camera_intrinsic_params
+        ],
+        'extrinsic': [
+            {
+                'frame_id': e.frame_id,
+                'child_frame_id': e.child_frame_id,
+                'translation': [
+                    e.transform.translation.x,
+                    e.transform.translation.y,
+                    e.transform.translation.z,
+                ],
+                'rotation': [
+                    e.transform.rotation.x,
+                    e.transform.rotation.y,
+                    e.transform.rotation.z,
+                    e.transform.rotation.w,
+                ],
+            }
+            for e in msg.extrinsic_params
+        ],
+    }
+
+
 def encode_cloud(msg, max_points, topic=None):
-    """Pack a PointCloud2 into [uint32 header_len][json header][xyz float32]."""
+    """Pack a PointCloud2 into [uint32 header_len][json header][float32 data].
+
+    Data is xyz, or xyzi when the cloud has an intensity field.
+    """
+    fields = {field.name for field in msg.fields}
+    names = ('x', 'y', 'z', 'intensity') if 'intensity' in fields else ('x', 'y', 'z')
     try:
-        xyz = point_cloud2.read_points_numpy(
-            msg, field_names=('x', 'y', 'z'), skip_nans=True
+        data = point_cloud2.read_points_numpy(
+            msg, field_names=names, skip_nans=True
         )
     except Exception:  # noqa: BLE001
         return None
-    if xyz.size == 0:
+    if data.size == 0:
         return None
-    xyz = np.asarray(xyz, dtype='<f4').reshape(-1, 3)
+    if data.dtype.names:
+        data = np.column_stack([data[name] for name in data.dtype.names])
+    data = np.asarray(data, dtype='<f4').reshape(-1, len(names))
     limit = max(1, int(max_points))
-    if len(xyz) > limit:
-        idx = np.linspace(0, len(xyz) - 1, limit).astype(np.int64)
-        xyz = xyz[idx]
+    if len(data) > limit:
+        idx = np.linspace(0, len(data) - 1, limit).astype(np.int64)
+        data = data[idx]
     header = json.dumps(
-        {'stream': 'cloud', 'count': int(len(xyz)), 'dtype': 'f32', 'topic': topic}
+        {
+            'stream': 'cloud',
+            'count': int(len(data)),
+            'stride': len(names),
+            'dtype': 'f32',
+            'topic': topic,
+        }
     ).encode()
-    return struct.pack('<I', len(header)) + header + xyz.tobytes()
+    return struct.pack('<I', len(header)) + header + data.tobytes()
 
 
 class Bridge:
@@ -179,6 +241,9 @@ class Session:
         self.image_sub = None
         self.command_topic = None
         self.cmd_pub = None
+        self.params_sub = None
+        self.result_pub = None
+        self.status_msg = None
         self.cloud_subs = {}
         self.cloud_msg = None
         self.want_cloud = False
@@ -209,6 +274,10 @@ class Session:
         if generation == self.generation and topic in self.cloud_subs:
             self.cloud_msg = msg
 
+    def on_params(self, msg):
+        self.send_ctrl(params_dict(msg))
+        self.event.set()
+
     def offer_image(self, generation, data):
         if generation != self.generation:
             return
@@ -224,9 +293,16 @@ class Session:
             self.bridge.node.destroy_subscription(sub)
         if self.cmd_pub is not None:
             self.bridge.node.destroy_publisher(self.cmd_pub)
+        if self.params_sub is not None:
+            self.bridge.node.destroy_subscription(self.params_sub)
+        if self.result_pub is not None:
+            self.bridge.node.destroy_publisher(self.result_pub)
         self.image_sub = None
         self.cloud_subs = {}
         self.cmd_pub = None
+        self.params_sub = None
+        self.result_pub = None
+        self.status_msg = None
         self.image_topic = None
         self.command_topic = None
         self.cloud_msg = None
@@ -237,7 +313,15 @@ class Session:
     def apply_meta(self, msg):
         types = self.bridge.types
         generation = self.generation
-        topic = image_topic_of(self.selected)
+        self.status_msg = msg
+        prefix = status_prefix(self.selected)
+        debug_topic = prefix + '/debug_image' if prefix else None
+        # Nodes that publish a debug image keep it; other nodes advertise the
+        # image to display through sensor_topic.
+        if debug_topic and IMAGE_TYPE in types.get(debug_topic, []):
+            topic = debug_topic
+        else:
+            topic = msg.sensor_topic or None
         if topic != self.image_topic:
             if self.image_sub is not None:
                 self.bridge.node.destroy_subscription(self.image_sub)
@@ -256,6 +340,18 @@ class Session:
                 self.cmd_pub = self.bridge.node.create_publisher(
                     CalibrationCommand, self.command_topic, 10
                 )
+        prefix = status_prefix(self.selected)
+        if prefix and self.params_sub is None:
+            self.params_sub = self.bridge.node.create_subscription(
+                CalibrationParams,
+                prefix + '/initial_params',
+                self.on_params,
+                PARAMS_QOS,
+            )
+        if prefix and self.result_pub is None:
+            self.result_pub = self.bridge.node.create_publisher(
+                CalibrationParams, prefix + '/result_params', 10
+            )
         wanted = set(self.bridge.cloud_topics(msg))
         for topic in list(self.cloud_subs):
             if topic not in wanted:
@@ -341,9 +437,43 @@ class Session:
             self.event.set()
         elif kind == 'command':
             self.publish_command(request)
+        elif kind == 'result':
+            self.publish_result(request)
+            self.event.set()
         elif kind == 'cloud':
             self.want_cloud = True
             self.event.set()
+
+    def publish_result(self, request):
+        if self.result_pub is None or self.status_msg is None:
+            self.send_ctrl({'type': 'error', 'message': 'not connected to a calibration node'})
+            self.event.set()
+            return
+        translation = request.get('translation')
+        rotation = request.get('rotation')
+        if (
+            not isinstance(translation, list)
+            or not isinstance(rotation, list)
+            or len(translation) != 3
+            or len(rotation) != 4
+        ):
+            self.send_ctrl({'type': 'error', 'message': 'invalid calibration result'})
+            self.event.set()
+            return
+        msg = CalibrationParams()
+        msg.timestamp = self.bridge.node.get_clock().now().to_msg()
+        extrinsic = ExtrinsicParam()
+        extrinsic.frame_id = self.status_msg.frame_id
+        extrinsic.child_frame_id = self.status_msg.child_frame_id
+        extrinsic.transform.translation.x = float(translation[0])
+        extrinsic.transform.translation.y = float(translation[1])
+        extrinsic.transform.translation.z = float(translation[2])
+        extrinsic.transform.rotation.x = float(rotation[0])
+        extrinsic.transform.rotation.y = float(rotation[1])
+        extrinsic.transform.rotation.z = float(rotation[2])
+        extrinsic.transform.rotation.w = float(rotation[3])
+        msg.extrinsic_params = [extrinsic]
+        self.result_pub.publish(msg)
 
     def publish_command(self, request):
         if self.cmd_pub is None:
@@ -362,7 +492,12 @@ class Session:
             self.send_ctrl({'type': 'error', 'message': f'unknown command: {name}'})
             self.event.set()
             return
-        self.cmd_pub.publish(msg)
+        if name == 'save':
+            # result_params and command are on different topics; give the node
+            # a small window to receive the result first.
+            self.loop.call_later(0.03, self.cmd_pub.publish, msg)
+        else:
+            self.cmd_pub.publish(msg)
 
 
 async def index(request):

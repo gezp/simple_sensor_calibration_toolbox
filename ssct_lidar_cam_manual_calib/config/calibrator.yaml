@@ -1,4 +1,5 @@
-lidar_projector:
-    use_intensity_color: false
-    point_size: 3
-
+# image and pointcloud pairing, both use message header stamps.
+sync:
+    image_time_offset: 0.0   # seconds, t_cam_corrected = t_cam + offset
+    max_time_diff: 0.05      # seconds, reject pairs with larger difference
+    timeout: 5.0             # seconds, capture timeout by wall clock

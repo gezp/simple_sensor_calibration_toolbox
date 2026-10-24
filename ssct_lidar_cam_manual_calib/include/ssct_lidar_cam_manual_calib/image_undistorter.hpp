@@ -14,9 +14,6 @@
 
 #pragma once
 
-#include <yaml-cpp/yaml.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
 #include <Eigen/Dense>
 
 #include <memory>
@@ -25,25 +22,31 @@
 
 #include "opencv2/opencv.hpp"
 
+#include "ssct_common/calib_param/camera_intrinsic_param.hpp"
+
 namespace ssct_lidar_cam_manual_calib
 {
 
-class LidarProjector
+// Resamples images into a pinhole or ftheta target model:
+// pinhole_radtan -> pinhole, pinhole_equidistant -> ftheta.
+class ImageUndistorter
 {
 public:
-  explicit LidarProjector(const YAML::Node & config);
-  bool project(
-    const pcl::PointCloud<pcl::PointXYZI> & pointcloud,
-    const std::vector<double> & camera_intrinsic, const Eigen::Matrix4d & T_lidar_camera,
-    cv::Mat & out_image);
-  std::string error_message() {return error_message_;}
+  bool init(const ssct_common::CameraIntrinsicParam & source);
+  bool process(const cv::Mat & image, cv::Mat & out_image) const;
+  const ssct_common::CameraIntrinsicParam & target_param() const {return target_;}
+  std::string error_message() const {return error_message_;}
 
 private:
-  cv::Scalar generate_color(float value);
+  bool build_maps();
+  bool unproject_target(double u, double v, Eigen::Vector3d & ray) const;
+  bool project_source(const Eigen::Vector3d & ray, double & u, double & v) const;
 
 private:
-  bool use_intensity_color_{false};
-  int point_size_{3};
+  ssct_common::CameraIntrinsicParam source_;
+  ssct_common::CameraIntrinsicParam target_;
+  cv::Mat map_x_;
+  cv::Mat map_y_;
   std::string error_message_;
 };
 

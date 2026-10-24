@@ -227,6 +227,9 @@ bool CalibParamManager::load(const std::string & file)
         param.frame_id = camera["frame_id"].as<std::string>();
         param.height = camera["height"].as<int>();
         param.width = camera["width"].as<int>();
+        if (camera["type"].IsDefined() && camera["type"].IsScalar()) {
+          param.type = camera["type"].as<std::string>();
+        }
         param.intrinsics = camera["intrinsics"].as<std::vector<double>>();
         param.distortion_coeffs = camera["distortion_coeffs"].as<std::vector<double>>();
         add_camera_intrinsic_param(param);
@@ -238,7 +241,7 @@ bool CalibParamManager::load(const std::string & file)
   }
   auto imus = config["imus"];
   if (imus.IsDefined() && imus.IsMap()) {
-    for (auto it = cameras.begin(); it != imus.end(); ++it) {
+    for (auto it = imus.begin(); it != imus.end(); ++it) {
       std::string key = "unknown";
       try {
         key = it->first.as<std::string>();
