@@ -1,4 +1,4 @@
-# ssct_lidar_cam_manual_calib
+# ssct_lidar_cam_calib
 
 Lidar-Camera 外参手动标定工具。
 
@@ -10,7 +10,6 @@ Lidar-Camera 外参手动标定工具。
 
 ```bash
 mkdir ~/calibration_data
-sudo apt install python3-aiohttp
 ```
 
 准备 demo 数据
@@ -20,7 +19,7 @@ sudo apt install python3-aiohttp
 运行标定 demo
 
 ```bash
-ros2 launch ssct_lidar_cam_manual_calib demo.launch.py
+ros2 launch ssct_lidar_cam_calib manual_calib_demo.launch.py
 ```
 
 另开终端启动 Web 客户端

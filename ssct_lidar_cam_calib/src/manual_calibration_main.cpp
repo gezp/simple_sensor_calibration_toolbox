@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ssct_lidar_cam_manual_calib/calibration_node.hpp"
+#include "ssct_lidar_cam_calib/manual_calibration_node.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<ssct_lidar_cam_manual_calib::CalibrationNode>();
+  auto node = std::make_shared<ssct_lidar_cam_calib::CalibrationNode>();
   rclcpp::spin(node->get_node_base_interface());
   rclcpp::shutdown();
   return 0;

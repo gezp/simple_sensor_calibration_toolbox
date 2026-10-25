@@ -31,9 +31,9 @@
 #include "ssct_interfaces/msg/calibration_status.hpp"
 #include "ssct_interfaces/msg/calibration_command.hpp"
 #include "ssct_interfaces/msg/calibration_params.hpp"
-#include "ssct_lidar_cam_manual_calib/image_undistorter.hpp"
+#include "ssct_lidar_cam_calib/image_undistorter.hpp"
 
-namespace ssct_lidar_cam_manual_calib
+namespace ssct_lidar_cam_calib
 {
 
 class CalibrationNode
@@ -121,4 +121,4 @@ private:
   std::deque<SaveRequest> save_requests_;
   std::mutex command_mutex_;
 };
-}  // namespace ssct_lidar_cam_manual_calib
+}  // namespace ssct_lidar_cam_calib

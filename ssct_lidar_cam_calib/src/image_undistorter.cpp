@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ssct_lidar_cam_manual_calib/image_undistorter.hpp"
+#include "ssct_lidar_cam_calib/image_undistorter.hpp"
 
 #include <algorithm>
 #include <cmath>
 
-namespace ssct_lidar_cam_manual_calib
+namespace ssct_lidar_cam_calib
 {
 namespace
 {
@@ -229,4 +229,4 @@ bool ImageUndistorter::process(const cv::Mat & image, cv::Mat & out_image) const
   return true;
 }
 
-}  // namespace ssct_lidar_cam_manual_calib
+}  // namespace ssct_lidar_cam_calib

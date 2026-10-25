@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ssct_lidar_cam_manual_calib/calibration_node.hpp"
+#include "ssct_lidar_cam_calib/manual_calibration_node.hpp"
 
 #include <yaml-cpp/yaml.h>
 #include <cmath>
@@ -20,7 +20,7 @@
 #include <fstream>
 #include <iterator>
 
-namespace ssct_lidar_cam_manual_calib
+namespace ssct_lidar_cam_calib
 {
 namespace
 {
@@ -67,7 +67,7 @@ bool parse_extrinsic_param(const ssct_interfaces::msg::ExtrinsicParam & msg, Eig
 
 CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
 {
-  node_ = std::make_shared<rclcpp::Node>("ssct_lidar_cam_manual_calib_node", options);
+  node_ = std::make_shared<rclcpp::Node>("ssct_lidar_cam_calib_node", options);
   std::string calibrator_config;
   node_->declare_parameter("camera_frame_id", camera_frame_id_);
   node_->declare_parameter("lidar_frame_id", lidar_frame_id_);
@@ -137,7 +137,7 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
     }
   }
   std::string topic_name_prefix =
-    "/calibration/ssct_lidar_cam_manual_calib/" + camera_frame_id_ + "_tf_" + lidar_frame_id_;
+    "/calibration/ssct_lidar_cam_calib/" + camera_frame_id_ + "_tf_" + lidar_frame_id_;
   image_topic_ = topic_name_prefix + "/image";
   cloud_topic_ = topic_name_prefix + "/pointcloud";
   // pub&sub
@@ -480,4 +480,4 @@ bool CalibrationNode::run()
   return false;
 }
 
-}  // namespace ssct_lidar_cam_manual_calib
+}  // namespace ssct_lidar_cam_calib

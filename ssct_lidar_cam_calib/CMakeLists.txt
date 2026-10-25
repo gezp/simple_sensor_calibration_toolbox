@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(ssct_lidar_cam_manual_calib)
+project(ssct_lidar_cam_calib)
 
 # Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
@@ -25,7 +25,7 @@ set(dependencies
 
 add_library(${PROJECT_NAME} SHARED
   src/image_undistorter.cpp
-  src/calibration_node.cpp
+  src/manual_calibration_node.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
@@ -34,11 +34,11 @@ target_link_libraries(${PROJECT_NAME}
   ${OpenCV_LIBS}
 )
 
-# calibration node
-add_executable(calibration_node
-  src/calibration_main.cpp)
+# manual calibration node
+add_executable(manual_calibration_node
+  src/manual_calibration_main.cpp)
 
-target_link_libraries(calibration_node ${PROJECT_NAME})
+target_link_libraries(manual_calibration_node ${PROJECT_NAME})
 
 
 # install include directories
@@ -57,7 +57,7 @@ install(TARGETS ${PROJECT_NAME}
 
 # install executables
 install(TARGETS
-    calibration_node
+    manual_calibration_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

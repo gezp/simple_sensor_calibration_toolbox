@@ -24,7 +24,7 @@
 
 #include "ssct_common/calib_param/camera_intrinsic_param.hpp"
 
-namespace ssct_lidar_cam_manual_calib
+namespace ssct_lidar_cam_calib
 {
 
 // Resamples images into a pinhole or ftheta target model:
@@ -50,4 +50,4 @@ private:
   std::string error_message_;
 };
 
-}  // namespace ssct_lidar_cam_manual_calib
+}  // namespace ssct_lidar_cam_calib
