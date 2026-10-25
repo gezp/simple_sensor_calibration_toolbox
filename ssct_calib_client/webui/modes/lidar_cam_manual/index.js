@@ -1,6 +1,11 @@
 // Lidar-camera manual calibration: the node pairs and undistorts, the browser
 // projects and tunes the extrinsic locally.
 
+import { Euler, Matrix4, Quaternion } from 'https://unpkg.com/three@0.170.0/build/three.module.min.js';
+
+const DEG_TO_RAD = Math.PI / 180;
+const RAD_TO_DEG = 180 / Math.PI;
+
 const STATE_TEXT = [
   'unknown',
   'ready',
@@ -23,114 +28,16 @@ export const meta = {
   calibrationType: 'ssct_lidar_cam_manual_calib',
 };
 
-function identity() {
-  return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
-}
-
 function matrixFromExtrinsic(extrinsic) {
-  const [qx, qy, qz, qw] = extrinsic.rotation;
-  const n = Math.hypot(qx, qy, qz, qw) || 1;
-  const x = qx / n;
-  const y = qy / n;
-  const z = qz / n;
-  const w = qw / n;
-  const xx = x * x;
-  const yy = y * y;
-  const zz = z * z;
-  const xy = x * y;
-  const xz = x * z;
-  const yz = y * z;
-  const wx = w * x;
-  const wy = w * y;
-  const wz = w * z;
-  const [tx, ty, tz] = extrinsic.translation;
-  return [
-    1 - 2 * (yy + zz), 2 * (xy - wz), 2 * (xz + wy), tx,
-    2 * (xy + wz), 1 - 2 * (xx + zz), 2 * (yz - wx), ty,
-    2 * (xz - wy), 2 * (yz + wx), 1 - 2 * (xx + yy), tz,
-    0, 0, 0, 1,
-  ];
-}
-
-function quaternionFromMatrix(T) {
-  const m00 = T[0];
-  const m01 = T[1];
-  const m02 = T[2];
-  const m10 = T[4];
-  const m11 = T[5];
-  const m12 = T[6];
-  const m20 = T[8];
-  const m21 = T[9];
-  const m22 = T[10];
-  const trace = m00 + m11 + m22;
-  let x;
-  let y;
-  let z;
-  let w;
-  if (trace > 0) {
-    const s = Math.sqrt(trace + 1) * 2;
-    w = 0.25 * s;
-    x = (m21 - m12) / s;
-    y = (m02 - m20) / s;
-    z = (m10 - m01) / s;
-  } else if (m00 > m11 && m00 > m22) {
-    const s = Math.sqrt(1 + m00 - m11 - m22) * 2;
-    w = (m21 - m12) / s;
-    x = 0.25 * s;
-    y = (m01 + m10) / s;
-    z = (m02 + m20) / s;
-  } else if (m11 > m22) {
-    const s = Math.sqrt(1 + m11 - m00 - m22) * 2;
-    w = (m02 - m20) / s;
-    x = (m01 + m10) / s;
-    y = 0.25 * s;
-    z = (m12 + m21) / s;
-  } else {
-    const s = Math.sqrt(1 + m22 - m00 - m11) * 2;
-    w = (m10 - m01) / s;
-    x = (m02 + m20) / s;
-    y = (m12 + m21) / s;
-    z = 0.25 * s;
-  }
-  const n = Math.hypot(x, y, z, w) || 1;
-  return [x / n, y / n, z / n, w / n];
+  const quaternion = new Quaternion(...extrinsic.rotation).normalize();
+  const matrix = new Matrix4().makeRotationFromQuaternion(quaternion);
+  return matrix.setPosition(...extrinsic.translation);
 }
 
 // ZYX Euler angles in degrees. The pose itself stays as a matrix/quaternion.
-function eulerFromMatrix(T) {
-  const m20 = T[8];
-  const m21 = T[9];
-  const m22 = T[10];
-  const m10 = T[4];
-  const m00 = T[0];
-  const pitch = Math.asin(Math.max(-1, Math.min(1, -m20)));
-  const roll = Math.atan2(m21, m22);
-  const yaw = Math.atan2(m10, m00);
-  const toDeg = (rad) => (rad * 180) / Math.PI;
-  return [toDeg(roll), toDeg(pitch), toDeg(yaw)];
-}
-
-function rotationAxis(axis, degree) {
-  const a = (degree * Math.PI) / 180;
-  const c = Math.cos(a);
-  const s = Math.sin(a);
-  if (axis === 'roll') return [1, 0, 0, 0, c, -s, 0, s, c];
-  if (axis === 'pitch') return [c, 0, s, 0, 1, 0, -s, 0, c];
-  return [c, -s, 0, s, c, 0, 0, 0, 1];
-}
-
-function mat3mul(a, b) {
-  return [
-    a[0] * b[0] + a[1] * b[3] + a[2] * b[6],
-    a[0] * b[1] + a[1] * b[4] + a[2] * b[7],
-    a[0] * b[2] + a[1] * b[5] + a[2] * b[8],
-    a[3] * b[0] + a[4] * b[3] + a[5] * b[6],
-    a[3] * b[1] + a[4] * b[4] + a[5] * b[7],
-    a[3] * b[2] + a[4] * b[5] + a[5] * b[8],
-    a[6] * b[0] + a[7] * b[3] + a[8] * b[6],
-    a[6] * b[1] + a[7] * b[4] + a[8] * b[7],
-    a[6] * b[2] + a[7] * b[5] + a[8] * b[8],
-  ];
+function eulerFromMatrix(matrix) {
+  const euler = new Euler().setFromRotationMatrix(matrix, 'ZYX');
+  return [euler.x, euler.y, euler.z].map((v) => v * RAD_TO_DEG);
 }
 
 function fthetaThetaD(theta, coeffs) {
@@ -320,8 +227,9 @@ export function mount(root, ctx) {
 
   function updateExtrinsic() {
     if (!pose) return;
+    const m = pose.elements;
     translationEl.textContent =
-      [pose[3], pose[7], pose[11]].map((v) => v.toFixed(4)).join(', ');
+      [m[12], m[13], m[14]].map((v) => v.toFixed(4)).join(', ');
     rotationEl.textContent =
       eulerFromMatrix(pose).map((v) => v.toFixed(3)).join(', ');
   }
@@ -357,13 +265,14 @@ export function mount(root, ctx) {
       intensityMax > intensityMin;
     const colors = useIntensity ? intensityPalette : palette;
     const step = Math.max(3, pointStride);
+    const m = pose.elements;
     for (let i = 0; i + step - 1 < points.length; i += step) {
       const X = points[i];
       const Y = points[i + 1];
       const Z = points[i + 2];
-      const x = pose[0] * X + pose[1] * Y + pose[2] * Z + pose[3];
-      const y = pose[4] * X + pose[5] * Y + pose[6] * Z + pose[7];
-      const z = pose[8] * X + pose[9] * Y + pose[10] * Z + pose[11];
+      const x = m[0] * X + m[4] * Y + m[8] * Z + m[12];
+      const y = m[1] * X + m[5] * Y + m[9] * Z + m[13];
+      const z = m[2] * X + m[6] * Y + m[10] * Z + m[14];
       if (z <= 0.1) continue;
       const [u, v] = projector(x, y, z);
       if (!Number.isFinite(u) || !Number.isFinite(v)) continue;
@@ -390,34 +299,20 @@ export function mount(root, ctx) {
   }
 
   function translate(dx, dy, dz) {
-    pose[3] += dx;
-    pose[7] += dy;
-    pose[11] += dz;
+    pose.elements[12] += dx;
+    pose.elements[13] += dy;
+    pose.elements[14] += dz;
     draw();
   }
 
   function rotate(axis, degree) {
-    const delta = rotationAxis(axis, degree);
-    const r = [pose[0], pose[1], pose[2], pose[4], pose[5], pose[6], pose[8], pose[9], pose[10]];
-    const t = [pose[3], pose[7], pose[11]];
-    const rn = mat3mul(delta, r);
-    const tn = [
-      delta[0] * t[0] + delta[1] * t[1] + delta[2] * t[2],
-      delta[3] * t[0] + delta[4] * t[1] + delta[5] * t[2],
-      delta[6] * t[0] + delta[7] * t[1] + delta[8] * t[2],
-    ];
-    pose[0] = rn[0];
-    pose[1] = rn[1];
-    pose[2] = rn[2];
-    pose[4] = rn[3];
-    pose[5] = rn[4];
-    pose[6] = rn[5];
-    pose[8] = rn[6];
-    pose[9] = rn[7];
-    pose[10] = rn[8];
-    pose[3] = tn[0];
-    pose[7] = tn[1];
-    pose[11] = tn[2];
+    const delta = new Matrix4();
+    if (axis === 'roll') delta.makeRotationX(degree * DEG_TO_RAD);
+    else if (axis === 'pitch') delta.makeRotationY(degree * DEG_TO_RAD);
+    else delta.makeRotationZ(degree * DEG_TO_RAD);
+    // Extrinsic is right-multiplied: R = R0 * dR. The pure-rotation delta
+    // leaves the translation untouched.
+    pose.multiply(delta);
     draw();
   }
 
@@ -447,7 +342,7 @@ export function mount(root, ctx) {
   }
 
   query('[data-reset-extrinsic]').addEventListener('click', () => {
-    if (initialPose) pose = initialPose.slice();
+    if (initialPose) pose = initialPose.clone();
     draw();
   });
   commandButton('start', 'primary', () => ctx.send({ command: 'start' }));
@@ -455,10 +350,10 @@ export function mount(root, ctx) {
   commandButton('save result', '', () => {
     if (!pose) return;
     if (!confirm('Save calibration result? This overwrites the output file.')) return;
-    const rotation = quaternionFromMatrix(pose);
+    const m = pose.elements;
     ctx.result({
-      translation: [pose[3], pose[7], pose[11]],
-      rotation,
+      translation: [m[12], m[13], m[14]],
+      rotation: new Quaternion().setFromRotationMatrix(pose).toArray(),
     });
     ctx.send({ command: 'save' });
   });
@@ -526,7 +421,7 @@ export function mount(root, ctx) {
       }
       if (extrinsic) {
         initialPose = matrixFromExtrinsic(extrinsic);
-        pose = initialPose.slice();
+        pose = initialPose.clone();
         draw();
       }
     },
