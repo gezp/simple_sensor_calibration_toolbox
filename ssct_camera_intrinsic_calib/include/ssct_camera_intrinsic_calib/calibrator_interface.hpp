@@ -26,8 +26,10 @@ class CalibratorInterface
 {
 public:
   virtual ~CalibratorInterface() = default;
-  virtual bool process_image(const cv::Mat & image) = 0;
-  virtual bool ready_to_optimize() = 0;
+  virtual void set_image_size(const cv::Size & image_size) = 0;
+  virtual void add_points(
+    const std::vector<cv::Point2f> & image_points,
+    const std::vector<cv::Point3f> & object_points) = 0;
   virtual bool optimize() = 0;
   virtual void clear() = 0;
   virtual std::string get_type() const = 0;
@@ -35,7 +37,6 @@ public:
   virtual std::vector<double> get_distortion_coeffs() const = 0;
   virtual cv::Size get_image_size() const = 0;
   virtual const std::string & get_status_message() const = 0;
-  virtual cv::Mat get_debug_image() const = 0;
 };
 
 }  // namespace ssct_camera_intrinsic_calib

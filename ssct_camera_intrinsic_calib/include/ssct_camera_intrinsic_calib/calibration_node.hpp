@@ -27,6 +27,8 @@
 #include "ssct_camera_intrinsic_calib/calibrator/opencv_calibrator.hpp"
 #include "ssct_camera_intrinsic_calib/calibrator/opencv_fisheye_calibrator.hpp"
 #include "ssct_camera_intrinsic_calib/calibrator/opencv_omnidir_calibrator.hpp"
+#include "ssct_camera_intrinsic_calib/detector/chessboard_detector.hpp"
+#include "ssct_camera_intrinsic_calib/image_picker.hpp"
 #include "ssct_interfaces/msg/calibration_status.hpp"
 #include "ssct_interfaces/msg/calibration_command.hpp"
 
@@ -46,6 +48,8 @@ public:
 private:
   void read_data();
   void clear_data();
+  bool process_image(const cv::Mat & image);
+  void clear_collection();
   void process_command(uint8_t command);
   void update_status_msg(uint8_t state, const std::string & info, uint8_t progress);
   bool save_result();
@@ -58,6 +62,8 @@ private:
   rclcpp::Subscription<ssct_interfaces::msg::CalibrationCommand>::SharedPtr cmd_sub_;
   rclcpp::Publisher<ssct_interfaces::msg::CalibrationStatus>::SharedPtr status_pub_;
   std::shared_ptr<ssct_common::ImagePublisher> debug_image_pub_;
+  std::unique_ptr<ChessboardDetector> detector_;
+  std::unique_ptr<ImagePicker> image_picker_;
   std::shared_ptr<CalibratorInterface> calibrator_;
   // param
   std::string frame_id_{"camera"};
@@ -70,6 +76,11 @@ private:
   // data
   std::deque<ssct_common::ImageData> sensor_data_buffer_;
   double last_valid_image_time_{-1.0};
+  cv::Size image_size_;
+  int total_img_num_{0};
+  int valid_img_num_{0};
+  std::string collect_status_message_;
+  cv::Mat debug_image_;
   std::shared_ptr<ssct_common::CalibParamManager> calib_param_manager_;
   uint8_t state_;
   bool success_{false};

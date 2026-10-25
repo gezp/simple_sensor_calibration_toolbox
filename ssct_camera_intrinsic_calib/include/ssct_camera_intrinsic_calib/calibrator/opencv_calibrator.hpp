@@ -14,14 +14,11 @@
 
 #pragma once
 
-#include <yaml-cpp/yaml.h>
-
 #include <string>
 #include <vector>
 
 #include "opencv2/opencv.hpp"
 #include "ssct_camera_intrinsic_calib/calibrator_interface.hpp"
-#include "ssct_camera_intrinsic_calib/detector/chessboard_detector.hpp"
 
 namespace ssct_camera_intrinsic_calib
 {
@@ -32,9 +29,10 @@ namespace ssct_camera_intrinsic_calib
 class OpenCVCalibrator : public CalibratorInterface
 {
 public:
-  explicit OpenCVCalibrator(const YAML::Node & config);
-  bool process_image(const cv::Mat & image) override;
-  bool ready_to_optimize() override;
+  void set_image_size(const cv::Size & image_size) override;
+  void add_points(
+    const std::vector<cv::Point2f> & image_points,
+    const std::vector<cv::Point3f> & object_points) override;
   bool optimize() override;
   void clear() override;
   // get result
@@ -43,23 +41,17 @@ public:
   std::vector<double> get_distortion_coeffs() const override;
   cv::Size get_image_size() const override;
   const std::string & get_status_message() const override;
-  cv::Mat get_debug_image() const override;
 
 private:
-  ChessboardDetector detector_;
   cv::Size image_size_;
   std::vector<std::vector<cv::Point2f>> image_points_;
   std::vector<std::vector<cv::Point3f>> object_points_;
-  int total_img_num_{0};
-  int valid_img_num_{0};
-  int min_valid_image_{15};
   bool calibrated_{false};
   cv::Mat camera_intrinsic_;
   cv::Mat camera_distortion_;
   std::vector<cv::Vec3d> board_rotations_;
   std::vector<cv::Vec3d> board_translations_;
   std::string status_message_;
-  cv::Mat debug_image_;
 };
 
 }  // namespace ssct_camera_intrinsic_calib

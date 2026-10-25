@@ -17,46 +17,17 @@
 namespace ssct_camera_intrinsic_calib
 {
 
-OpenCVFisheyeCalibrator::OpenCVFisheyeCalibrator(const YAML::Node & config)
-: detector_(config["pattern_detector"])
+void OpenCVFisheyeCalibrator::set_image_size(const cv::Size & image_size)
 {
-  min_valid_image_ = config["min_valid_image"].as<int>();
-  image_size_ = cv::Size(0, 0);
+  image_size_ = image_size;
 }
 
-bool OpenCVFisheyeCalibrator::process_image(const cv::Mat & image)
+void OpenCVFisheyeCalibrator::add_points(
+  const std::vector<cv::Point2f> & image_points,
+  const std::vector<cv::Point3f> & object_points)
 {
-  total_img_num_++;
-  if (image_size_ == cv::Size(0, 0)) {
-    image_size_ = image.size();
-  }
-  if (image.size() != image_size_) {
-    status_message_ =
-      "[collect data] invalid image size, total image:" + std::to_string(total_img_num_);
-    return false;
-  }
-  std::vector<cv::Point2f> image_corners;
-  if (!detector_.detect(image, image_corners)) {
-    status_message_ = "[collect data] failed to find chessborad corners, total image:" +
-      std::to_string(total_img_num_);
-    return false;
-  }
-  image_points_.push_back(image_corners);
-  object_points_.push_back(detector_.get_pattern_points());
-  valid_img_num_++;
-  // debug
-  debug_image_ = image.clone();
-  cv::drawChessboardCorners(
-    debug_image_, detector_.get_corner_size(), image_corners, true);
-  status_message_ = "[collect data] total image:" + std::to_string(total_img_num_) +
-    ", valid image:" + std::to_string(valid_img_num_) + ".";
-  return true;
-}
-
-
-bool OpenCVFisheyeCalibrator::ready_to_optimize()
-{
-  return valid_img_num_ >= min_valid_image_;
+  image_points_.push_back(image_points);
+  object_points_.push_back(object_points);
 }
 
 bool OpenCVFisheyeCalibrator::optimize()
@@ -71,18 +42,17 @@ bool OpenCVFisheyeCalibrator::optimize()
     board_rotations_, board_translations_,
     cv::fisheye::CALIB_FIX_SKEW | cv::fisheye::CALIB_RECOMPUTE_EXTRINSIC, criteria);
   calibrated_ = true;
-  status_message_ = "[optimize] successed to optimize, image:" + std::to_string(valid_img_num_) +
+  status_message_ = "[optimize] successed to optimize, image:" +
+    std::to_string(image_points_.size()) +
     ", RMS re-projection error:" + std::to_string(rms);
   return true;
 }
 
 void OpenCVFisheyeCalibrator::clear()
 {
-  total_img_num_ = 0;
-  valid_img_num_ = 0;
+  image_size_ = cv::Size(0, 0);
   image_points_.clear();
   object_points_.clear();
-  image_size_ = cv::Size(0, 0);
   calibrated_ = false;
   status_message_ = "";
 }
@@ -119,11 +89,6 @@ cv::Size OpenCVFisheyeCalibrator::get_image_size() const
 const std::string & OpenCVFisheyeCalibrator::get_status_message() const
 {
   return status_message_;
-}
-
-cv::Mat OpenCVFisheyeCalibrator::get_debug_image() const
-{
-  return debug_image_;
 }
 
 }  // namespace ssct_camera_intrinsic_calib
