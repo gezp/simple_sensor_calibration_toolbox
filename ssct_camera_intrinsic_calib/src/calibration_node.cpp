@@ -298,7 +298,9 @@ bool CalibrationNode::run()
       if (process_image(sensor_data.image)) {
         last_valid_image_time_ = sensor_data.time;
         // debug
-        debug_image_pub_->publish(debug_image_, sensor_data.time);
+        cv::Mat debug_image_rgb;
+        cv::cvtColor(debug_image_, debug_image_rgb, cv::COLOR_BGR2RGB);
+        debug_image_pub_->publish(debug_image_rgb, sensor_data.time);
       }
       update_status_msg(state_, collect_status_message_, 50);
     } else {

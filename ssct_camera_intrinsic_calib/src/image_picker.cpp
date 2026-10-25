@@ -315,7 +315,7 @@ cv::Mat ImagePicker::draw_debug(const cv::Mat & image) const
   const cv::Scalar label_color(175, 175, 175);
   const cv::Scalar white(245, 245, 245);
 
-  const double cell_font = std::max(0.45, 0.55 * image.rows / 720.0);
+  const double cell_font = std::max(0.9, 1.1 * image.rows / 720.0);
   const int cell_thickness = std::max(1, static_cast<int>(std::lround(2.0 * image.rows / 720.0)));
   for (int row = 0; row < info_.rows; ++row) {
     for (int col = 0; col < info_.cols; ++col) {
@@ -325,10 +325,6 @@ cv::Mat ImagePicker::draw_debug(const cv::Mat & image) const
       const int y1 = (row + 1) * image.rows / info_.rows;
       const size_t index = static_cast<size_t>(row * info_.cols + col);
       const bool passed = index < info_.cell_passed.size() && info_.cell_passed[index] != 0;
-      const cv::Rect rect(x0, y0, x1 - x0, y1 - y0);
-      cv::Mat region = canvas(rect);
-      cv::Mat tint(region.size(), region.type(), passed ? green : red);
-      cv::addWeighted(region, 0.85, tint, 0.15, 0.0, region);
 
       const int cell_percent =
         index < info_.cell_coverage_pct.size() ? info_.cell_coverage_pct[index] : 0;
@@ -342,8 +338,8 @@ cv::Mat ImagePicker::draw_debug(const cv::Mat & image) const
         canvas, text, origin, cv::FONT_HERSHEY_SIMPLEX, cell_font, cv::Scalar(0, 0, 0),
         cell_thickness + 2, cv::LINE_AA);
       cv::putText(
-        canvas, text, origin, cv::FONT_HERSHEY_SIMPLEX, cell_font, white, cell_thickness,
-        cv::LINE_AA);
+        canvas, text, origin, cv::FONT_HERSHEY_SIMPLEX, cell_font, passed ? green : red,
+        cell_thickness, cv::LINE_AA);
     }
   }
   for (int col = 1; col < info_.cols; ++col) {
