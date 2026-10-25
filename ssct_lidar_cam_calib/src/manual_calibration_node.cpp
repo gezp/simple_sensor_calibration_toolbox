@@ -369,9 +369,6 @@ void CalibrationNode::process_command(const ssct_interfaces::msg::CalibrationCom
     clear_data();
     capture_start_time_ = std::chrono::steady_clock::now();
     update_status_msg(state_, "waiting for synchronized image and pointcloud.", 1);
-  } else if (msg.command == ssct_interfaces::msg::CalibrationCommand::CUSTOM_KEY_VAULE) {
-    RCLCPP_WARN(
-      node_->get_logger(), "unsupported command CUSTOM_KEY_VAULE: %s", msg.key.c_str());
   } else {
     RCLCPP_WARN(node_->get_logger(), "unsupported calibration command: %d", msg.command);
   }

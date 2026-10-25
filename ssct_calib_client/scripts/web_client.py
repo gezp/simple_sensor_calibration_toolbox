@@ -486,12 +486,9 @@ class Session:
             self.event.set()
             return
         msg = CalibrationCommand()
+        msg.timestamp = self.ros_node.get_clock().now().to_msg()
         name = request.get('command')
-        if name == 'custom':
-            msg.command = CalibrationCommand.CUSTOM_KEY_VAULE
-            msg.key = str(request.get('key', ''))
-            msg.value = float(request.get('value', 0.0))
-        elif name in COMMANDS:
+        if name in COMMANDS:
             msg.command = COMMANDS[name]
         else:
             self.send_ctrl({'type': 'error', 'message': f'unknown command: {name}'})

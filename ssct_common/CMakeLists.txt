@@ -98,11 +98,6 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-# install executable scripts
-install(PROGRAMS
-  scripts/calibration_client.py
-  DESTINATION lib/${PROJECT_NAME})
-
 # install directories
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
