@@ -46,7 +46,7 @@ colcon build --symlink-install
 
 sensor2sensor外参标定
 
-- [ ] 实现手动lidar2lidar外参标定: `ssct_lidar_lidar_calib`
+- [x] 实现手动lidar2lidar外参标定: `ssct_lidar_lidar_calib`
 - [ ] 实现基于ICP的自动lidar2lidar外参标定: `ssct_lidar_lidar_calib`
 - [x] 实现手动lidar2camera外参标定: `ssct_lidar_cam_calib`
 

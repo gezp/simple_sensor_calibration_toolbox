@@ -1,10 +1,13 @@
 // Lidar-camera manual calibration: the node pairs and undistorts, the browser
 // projects and tunes the extrinsic locally.
 
-import { Euler, Matrix4, Quaternion } from 'https://unpkg.com/three@0.170.0/build/three.module.min.js';
-
-const DEG_TO_RAD = Math.PI / 180;
-const RAD_TO_DEG = 180 / Math.PI;
+import {
+  eulerFromMatrix,
+  matrixFromExtrinsic,
+  poseResult,
+  rotatePose,
+  translatePose,
+} from '../../components/extrinsic.js';
 
 const STATE_TEXT = [
   'unknown',
@@ -27,18 +30,6 @@ export const meta = {
   label: '激光相机手动标定',
   calibrationType: 'ssct_lidar_cam_manual_calib',
 };
-
-function matrixFromExtrinsic(extrinsic) {
-  const quaternion = new Quaternion(...extrinsic.rotation).normalize();
-  const matrix = new Matrix4().makeRotationFromQuaternion(quaternion);
-  return matrix.setPosition(...extrinsic.translation);
-}
-
-// ZYX Euler angles in degrees. The pose itself stays as a matrix/quaternion.
-function eulerFromMatrix(matrix) {
-  const euler = new Euler().setFromRotationMatrix(matrix, 'ZYX');
-  return [euler.x, euler.y, euler.z].map((v) => v * RAD_TO_DEG);
-}
 
 function fthetaThetaD(theta, coeffs) {
   const t2 = theta * theta;
@@ -299,20 +290,12 @@ export function mount(root, ctx) {
   }
 
   function translate(dx, dy, dz) {
-    pose.elements[12] += dx;
-    pose.elements[13] += dy;
-    pose.elements[14] += dz;
+    translatePose(pose, dx, dy, dz);
     draw();
   }
 
   function rotate(axis, degree) {
-    const delta = new Matrix4();
-    if (axis === 'roll') delta.makeRotationX(degree * DEG_TO_RAD);
-    else if (axis === 'pitch') delta.makeRotationY(degree * DEG_TO_RAD);
-    else delta.makeRotationZ(degree * DEG_TO_RAD);
-    // Extrinsic is right-multiplied: R = R0 * dR. The pure-rotation delta
-    // leaves the translation untouched.
-    pose.multiply(delta);
+    rotatePose(pose, axis, degree);
     draw();
   }
 
@@ -350,11 +333,7 @@ export function mount(root, ctx) {
   commandButton('save result', '', () => {
     if (!pose) return;
     if (!confirm('Save calibration result? This overwrites the output file.')) return;
-    const m = pose.elements;
-    ctx.result({
-      translation: [m[12], m[13], m[14]],
-      rotation: new Quaternion().setFromRotationMatrix(pose).toArray(),
-    });
+    ctx.result(poseResult(pose));
     ctx.send({ command: 'save' });
   });
 

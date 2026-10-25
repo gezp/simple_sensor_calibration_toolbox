@@ -1,0 +1,11 @@
+transforms:
+    transform1:
+        frame_id: top_center_lidar
+        child_frame_id: left_lidar
+        translation: [-0.06763169358385032, 0.6257701373941718, -0.35145357319239473]
+        rotation_xyzw: [0.0, 0.0, 0.7071067811865476, 0.7071067811865476]  # x,y,z,w
+    transform2:
+        frame_id: top_center_lidar
+        child_frame_id: right_lidar
+        translation: [-0.0001307057033816915, -0.4632752877792159, -0.46602840121078765]
+        rotation_xyzw: [0.0, 0.0, -0.7071067811865476, 0.7071067811865476]  # x,y,z,w

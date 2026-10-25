@@ -72,7 +72,9 @@ def status_dict(msg):
         'progress': int(msg.progress),
         'info': msg.info,
         'frame_id': msg.frame_id,
+        'sensor_topic': msg.sensor_topic,
         'child_frame_id': msg.child_frame_id,
+        'child_sensor_topic': msg.child_sensor_topic,
         'calibration_type': msg.calibration_type,
         'stamp': {'sec': msg.timestamp.sec, 'nanosec': msg.timestamp.nanosec},
     }
@@ -82,6 +84,7 @@ MODES = [
     {'id': 'generic', 'url': '/static/modes/generic/index.js'},
     {'id': 'camera_intrinsic', 'url': '/static/modes/camera_intrinsic/index.js'},
     {'id': 'lidar_cam_manual', 'url': '/static/modes/lidar_cam_manual/index.js'},
+    {'id': 'lidar_lidar_manual', 'url': '/static/modes/lidar_lidar_manual/index.js'},
 ]
 
 PARAMS_QOS = QoSProfile(
@@ -245,8 +248,8 @@ class Session:
         self.result_pub = None
         self.status_msg = None
         self.cloud_subs = {}
-        self.cloud_msg = None
-        self.want_cloud = False
+        self.cloud_msgs = {}
+        self.want_clouds = set()
         self.image = None
         self.generation = 0
 
@@ -272,7 +275,7 @@ class Session:
 
     def on_cloud(self, generation, topic, msg):
         if generation == self.generation and topic in self.cloud_subs:
-            self.cloud_msg = msg
+            self.cloud_msgs[topic] = msg
 
     def on_params(self, msg):
         self.send_ctrl(params_dict(msg))
@@ -305,10 +308,10 @@ class Session:
         self.status_msg = None
         self.image_topic = None
         self.command_topic = None
-        self.cloud_msg = None
+        self.cloud_msgs = {}
         self.meta_key = None
         self.image = None
-        self.want_cloud = False
+        self.want_clouds = set()
 
     def apply_meta(self, msg):
         types = self.bridge.types
@@ -404,15 +407,17 @@ class Session:
                         payload['topic'] = self.selected
                         await self.ws.send_str(json.dumps(payload))
 
-            if self.want_cloud and self.cloud_msg is not None:
-                msg = self.cloud_msg
-                self.want_cloud = False
+            for topic in list(self.want_clouds):
+                msg = self.cloud_msgs.pop(topic, None)
+                if msg is None:
+                    continue
+                self.want_clouds.discard(topic)
                 data = await self.loop.run_in_executor(
                     None,
                     encode_cloud,
                     msg,
                     self.settings['cloud_max_points'],
-                    self.selected,
+                    topic,
                 )
                 if data is not None:
                     await self.ws.send_bytes(data)
@@ -441,7 +446,7 @@ class Session:
             self.publish_result(request)
             self.event.set()
         elif kind == 'cloud':
-            self.want_cloud = True
+            self.want_clouds = set(self.cloud_subs)
             self.event.set()
 
     def publish_result(self, request):
@@ -497,6 +502,9 @@ class Session:
             # a small window to receive the result first.
             self.loop.call_later(0.03, self.cmd_pub.publish, msg)
         else:
+            if name in ('start', 'reset'):
+                self.cloud_msgs.clear()
+                self.want_clouds.clear()
             self.cmd_pub.publish(msg)
 
 
