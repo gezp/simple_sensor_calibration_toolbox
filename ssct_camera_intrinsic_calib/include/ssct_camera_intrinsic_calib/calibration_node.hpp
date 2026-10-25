@@ -48,7 +48,7 @@ private:
   void clear_data();
   void process_command(uint8_t command);
   void update_status_msg(uint8_t state, const std::string & info, uint8_t progress);
-  void save_result();
+  bool save_result();
   bool run();
 
 private:
@@ -69,6 +69,7 @@ private:
   bool exit_{false};
   // data
   std::deque<ssct_common::ImageData> sensor_data_buffer_;
+  double last_valid_image_time_{-1.0};
   std::shared_ptr<ssct_common::CalibParamManager> calib_param_manager_;
   uint8_t state_;
   bool success_{false};
