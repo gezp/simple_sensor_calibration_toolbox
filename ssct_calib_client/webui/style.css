@@ -313,6 +313,103 @@ canvas.lidar-cam-canvas {
   max-width: 100%;
 }
 
+.viewport.lidar-lidar-viewport {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  max-height: 50vh;
+}
+
+canvas.lidar-lidar-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+
+.lidar-lidar-label {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.lidar-lidar-sidebar {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  bottom: 8px;
+  width: 190px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgb(13 17 23 / 85%);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.lidar-lidar-sidebar .sidebar-title {
+  color: var(--fg);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lidar-lidar-sidebar .sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.lidar-lidar-sidebar .sidebar-views {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.lidar-lidar-sidebar .sidebar-views button {
+  padding: 3px 0;
+  font-size: 12px;
+}
+
+.lidar-lidar-sidebar .sidebar-views button.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.lidar-lidar-sidebar .sidebar-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.lidar-lidar-sidebar .sidebar-field select {
+  min-width: 0;
+  flex: 1;
+}
+
+.lidar-lidar-sidebar .sidebar-field input[type="range"] {
+  width: 82px;
+}
+
+.lidar-lidar-sidebar .sidebar-field input[type="color"] {
+  width: 40px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: none;
+}
+
 /* ---- panel: status ---- */
 
 .statusline {

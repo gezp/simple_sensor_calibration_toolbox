@@ -30,7 +30,7 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 'mode',
                 default_value='generic',
-                description='generic, camera_intrinsic or lidar_cam_manual',
+                description='generic, camera_intrinsic, lidar_cam_manual or lidar_lidar_manual',
             ),
             Node(
                 package='ssct_calib_client',

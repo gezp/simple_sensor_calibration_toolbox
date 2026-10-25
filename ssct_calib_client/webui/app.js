@@ -20,7 +20,7 @@ const state = {
   connected: false,
   panel: null,
   pendingImage: null,
-  pendingCloud: null,
+  pendingClouds: new Map(),
   pendingParams: null,
 };
 
@@ -69,7 +69,7 @@ function resetSelection() {
   state.panel = null;
   state.selected = null;
   state.pendingImage = null;
-  state.pendingCloud = null;
+  state.pendingClouds.clear();
   state.pendingParams = null;
   panelHost.replaceChildren();
 }
@@ -149,10 +149,10 @@ function onStatus(status) {
     state.panel?.image(state.pendingImage);
     state.pendingImage = null;
   }
-  if (state.pendingCloud) {
-    state.panel?.cloud(state.pendingCloud);
-    state.pendingCloud = null;
+  for (const cloud of state.pendingClouds.values()) {
+    state.panel?.cloud(cloud);
   }
+  state.pendingClouds.clear();
   if (state.pendingParams) {
     state.panel?.params(state.pendingParams);
     state.pendingParams = null;
@@ -165,9 +165,11 @@ function onBinary(buffer) {
     new TextDecoder().decode(new Uint8Array(buffer, 4, headerLength)),
   );
   if (!state.connected || !state.selected) return;
-  if (header.topic && header.topic !== state.selected) return;
   const payload = new Uint8Array(buffer, 4 + headerLength);
   if (header.stream === 'image') {
+    // Debug images belong to the selected status topic; clouds are routed by
+    // their own topic so a mode can show target and source together.
+    if (header.topic && header.topic !== state.selected) return;
     const blob = new Blob([payload], { type: 'image/jpeg' });
     if (state.panel) state.panel.image(blob);
     else state.pendingImage = blob;
@@ -175,9 +177,10 @@ function onBinary(buffer) {
     const data = {
       points: new Float32Array(payload.slice().buffer),
       stride: header.stride || 3,
+      topic: header.topic,
     };
     if (state.panel) state.panel.cloud?.(data);
-    else state.pendingCloud = data;
+    else state.pendingClouds.set(header.topic, data);
   }
 }
 
