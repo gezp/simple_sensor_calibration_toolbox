@@ -1,4 +1,4 @@
-# Copyright 2024 Gezp (https://github.com/gezp).
+# Copyright 2026 Gezp (https://github.com/gezp).
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,8 +29,11 @@ def generate_launch_description():
             DeclareLaunchArgument('port', default_value='8080'),
             DeclareLaunchArgument(
                 'mode',
-                default_value='generic',
-                description='generic, camera_intrinsic, lidar_cam_manual or lidar_lidar_manual',
+                default_value='generic_calib',
+                description=(
+                    'generic_calib, camera_intrinsic_calib, lidar_cam_manual_calib or '
+                    'lidar_lidar_manual_calib'
+                ),
             ),
             Node(
                 package='ssct_calib_client',
