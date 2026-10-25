@@ -15,6 +15,7 @@
 #include "ssct_camera_intrinsic_calib/calibration_node.hpp"
 
 #include <yaml-cpp/yaml.h>
+#include <array>
 #include <filesystem>
 #include <fstream>
 
@@ -60,29 +61,30 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
   debug_image_pub_ =
     std::make_shared<ssct_common::ImagePublisher>(node_, debug_topic, 100, frame_id_);
 
-  // calibrator
+  // collector & calibrator
   YAML::Node config_node = YAML::LoadFile(calibration_config);
   try {
     std::string calibrator_type = config_node["calibrator_type"].as<std::string>();
-    YAML::Node calibration_config_node = config_node[calibrator_type];
-    if (!calibration_config_node) {
-      RCLCPP_FATAL(
-        node_->get_logger(), "missing config for calibrator_type: %s", calibrator_type.c_str());
+    YAML::Node detector_config_node = config_node["chessboard_detector"];
+    if (!detector_config_node) {
+      RCLCPP_FATAL(node_->get_logger(), "missing chessboard_detector config");
       return;
     }
+    detector_ = std::make_unique<ChessboardDetector>(detector_config_node);
+    image_picker_ = std::make_unique<ImagePicker>(config_node["image_picker"]);
     if (calibrator_type == "opencv_calibrator") {
-      calibrator_ = std::make_shared<OpenCVCalibrator>(calibration_config_node);
+      calibrator_ = std::make_shared<OpenCVCalibrator>();
     } else if (calibrator_type == "opencv_fisheye_calibrator") {
-      calibrator_ = std::make_shared<OpenCVFisheyeCalibrator>(calibration_config_node);
+      calibrator_ = std::make_shared<OpenCVFisheyeCalibrator>();
     } else if (calibrator_type == "opencv_omnidir_calibrator") {
-      calibrator_ = std::make_shared<OpenCVOmnidirCalibrator>(calibration_config_node);
+      calibrator_ = std::make_shared<OpenCVOmnidirCalibrator>();
     } else {
       RCLCPP_FATAL(
         node_->get_logger(), "unsupported calibrator_type: %s", calibrator_type.c_str());
       return;
     }
   } catch (const std::exception & e) {
-    RCLCPP_FATAL(node_->get_logger(), "invalid calibrator config: %s", e.what());
+    RCLCPP_FATAL(node_->get_logger(), "invalid calibration config: %s", e.what());
     return;
   }
   calib_param_manager_ = std::make_shared<ssct_common::CalibParamManager>();
@@ -140,10 +142,57 @@ void CalibrationNode::clear_data()
   sensor_data_buffer_.clear();
 }
 
+bool CalibrationNode::process_image(const cv::Mat & image)
+{
+  total_img_num_++;
+  if (image_size_ == cv::Size(0, 0)) {
+    image_size_ = image.size();
+    calibrator_->set_image_size(image_size_);
+  }
+  if (image.size() != image_size_) {
+    collect_status_message_ =
+      "[collect data] invalid image size, total image:" + std::to_string(total_img_num_);
+    return false;
+  }
+  std::vector<cv::Point2f> image_corners;
+  if (!detector_->detect(image, image_corners)) {
+    collect_status_message_ = "[collect data] failed to find chessborad corners, total image:" +
+      std::to_string(total_img_num_);
+    return false;
+  }
+  const std::array<cv::Point2f, 4> board_corners =
+    detector_->calculate_board_corners(image_corners);
+  image_picker_->set_image_size(image.size());
+  const bool accepted = image_picker_->pick(image_corners, board_corners);
+  if (accepted) {
+    calibrator_->add_points(image_corners, detector_->get_pattern_points());
+    valid_img_num_++;
+  }
+  // debug
+  debug_image_ = image.clone();
+  cv::drawChessboardCorners(
+    debug_image_, detector_->get_corner_size(), image_corners, true);
+  debug_image_ = image_picker_->draw_debug(debug_image_);
+  collect_status_message_ = "[collect data] total image:" + std::to_string(total_img_num_) +
+    ", valid image:" + std::to_string(valid_img_num_) + ".";
+  return true;
+}
+
+void CalibrationNode::clear_collection()
+{
+  image_size_ = cv::Size(0, 0);
+  total_img_num_ = 0;
+  valid_img_num_ = 0;
+  collect_status_message_.clear();
+  debug_image_.release();
+  image_picker_->reset();
+}
+
 void CalibrationNode::process_command(uint8_t command)
 {
   if (command == ssct_interfaces::msg::CalibrationCommand::RESET) {
     state_ = ssct_interfaces::msg::CalibrationStatus::READY;
+    clear_collection();
     calibrator_->clear();
     update_status_msg(state_, "ready.", 0);
   } else if (command == ssct_interfaces::msg::CalibrationCommand::START) {
@@ -227,7 +276,7 @@ bool CalibrationNode::run()
   }
   // calibration flow
   if (state_ == ssct_interfaces::msg::CalibrationStatus::CALIBRATING) {
-    if (!calibrator_->ready_to_optimize()) {
+    if (!image_picker_->ready()) {
       read_data();
       if (sensor_data_buffer_.empty()) {
         return false;
@@ -246,12 +295,12 @@ bool CalibrationNode::run()
       if (!found) {
         return false;
       }
-      if (calibrator_->process_image(sensor_data.image)) {
+      if (process_image(sensor_data.image)) {
         last_valid_image_time_ = sensor_data.time;
         // debug
-        debug_image_pub_->publish(calibrator_->get_debug_image(), sensor_data.time);
+        debug_image_pub_->publish(debug_image_, sensor_data.time);
       }
-      update_status_msg(state_, calibrator_->get_status_message(), 50);
+      update_status_msg(state_, collect_status_message_, 50);
     } else {
       update_status_msg(state_, "start to optimize.", 51);
       if (calibrator_->optimize()) {

@@ -19,46 +19,17 @@
 namespace ssct_camera_intrinsic_calib
 {
 
-OpenCVOmnidirCalibrator::OpenCVOmnidirCalibrator(const YAML::Node & config)
-: detector_(config["pattern_detector"])
+void OpenCVOmnidirCalibrator::set_image_size(const cv::Size & image_size)
 {
-  min_valid_image_ = config["min_valid_image"].as<int>();
-  image_size_ = cv::Size(0, 0);
+  image_size_ = image_size;
 }
 
-bool OpenCVOmnidirCalibrator::process_image(const cv::Mat & image)
+void OpenCVOmnidirCalibrator::add_points(
+  const std::vector<cv::Point2f> & image_points,
+  const std::vector<cv::Point3f> & object_points)
 {
-  total_img_num_++;
-  if (image_size_ == cv::Size(0, 0)) {
-    image_size_ = image.size();
-  }
-  if (image.size() != image_size_) {
-    status_message_ =
-      "[collect data] invalid image size, total image:" + std::to_string(total_img_num_);
-    return false;
-  }
-  std::vector<cv::Point2f> image_corners;
-  if (!detector_.detect(image, image_corners)) {
-    status_message_ = "[collect data] failed to find chessborad corners, total image:" +
-      std::to_string(total_img_num_);
-    return false;
-  }
-  image_points_.push_back(image_corners);
-  object_points_.push_back(detector_.get_pattern_points());
-  valid_img_num_++;
-  // debug
-  debug_image_ = image.clone();
-  cv::drawChessboardCorners(
-    debug_image_, detector_.get_corner_size(), image_corners, true);
-  status_message_ = "[collect data] total image:" + std::to_string(total_img_num_) +
-    ", valid image:" + std::to_string(valid_img_num_) + ".";
-  return true;
-}
-
-
-bool OpenCVOmnidirCalibrator::ready_to_optimize()
-{
-  return valid_img_num_ >= min_valid_image_;
+  image_points_.push_back(image_points);
+  object_points_.push_back(object_points);
 }
 
 bool OpenCVOmnidirCalibrator::optimize()
@@ -72,22 +43,22 @@ bool OpenCVOmnidirCalibrator::optimize()
   cv::Mat xi = cv::Mat::zeros(1, 1, CV_64F);
   cv::TermCriteria criteria(cv::TermCriteria::COUNT | cv::TermCriteria::EPS, 200, 1e-8);
   double rms = cv::omnidir::calibrate(
-    object_points_, image_points_, image_size_, camera_intrinsic_, xi, camera_distortion_,
-    board_rotations_, board_translations_, cv::omnidir::CALIB_FIX_SKEW, criteria);
+    object_points_, image_points_, image_size_, camera_intrinsic_, xi,
+    camera_distortion_, board_rotations_, board_translations_, cv::omnidir::CALIB_FIX_SKEW,
+    criteria);
   xi_ = xi.at<double>(0, 0);
   calibrated_ = true;
-  status_message_ = "[optimize] successed to optimize, image:" + std::to_string(valid_img_num_) +
+  status_message_ = "[optimize] successed to optimize, image:" +
+    std::to_string(image_points_.size()) +
     ", RMS re-projection error:" + std::to_string(rms);
   return true;
 }
 
 void OpenCVOmnidirCalibrator::clear()
 {
-  total_img_num_ = 0;
-  valid_img_num_ = 0;
+  image_size_ = cv::Size(0, 0);
   image_points_.clear();
   object_points_.clear();
-  image_size_ = cv::Size(0, 0);
   calibrated_ = false;
   status_message_ = "";
 }
@@ -124,11 +95,6 @@ cv::Size OpenCVOmnidirCalibrator::get_image_size() const
 const std::string & OpenCVOmnidirCalibrator::get_status_message() const
 {
   return status_message_;
-}
-
-cv::Mat OpenCVOmnidirCalibrator::get_debug_image() const
-{
-  return debug_image_;
 }
 
 }  // namespace ssct_camera_intrinsic_calib

@@ -16,6 +16,7 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <array>
 #include <vector>
 
 #include "opencv2/opencv.hpp"
@@ -29,6 +30,8 @@ class ChessboardDetector
 public:
   explicit ChessboardDetector(const YAML::Node & config);
   bool detect(const cv::Mat & image, std::vector<cv::Point2f> & corners) const;
+  std::array<cv::Point2f, 4> calculate_board_corners(
+    const std::vector<cv::Point2f> & corners) const;
   const cv::Size & get_corner_size() const;
   const std::vector<cv::Point3f> & get_pattern_points() const;
 

@@ -6,7 +6,7 @@
 * `opencv_fisheye_calibrator`：标定`ftheta_kb`鱼眼相机模型（Kannala-Brandt），基于`cv::fisheye::calibrate`。
 * `opencv_omnidir_calibrator`：标定`mei_radtan`全景/全向相机模型（Mei），基于`cv::omnidir::calibrate`。
 
-每个标定器的配置写在与其同名的配置段中，例如 `opencv_calibrator:`。目前仅支持棋盘格标定板。
+标定板检测配置在顶层 `chessboard_detector:`，图像覆盖筛选配置在 `image_picker:`；`calibrator_type` 只选择后端优化器。目前仅支持棋盘格标定板。
 
 ## Quick Start
 

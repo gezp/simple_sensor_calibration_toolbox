@@ -27,6 +27,7 @@ set(dependencies
 
 add_library(${PROJECT_NAME} SHARED
   src/detector/chessboard_detector.cpp
+  src/image_picker.cpp
   src/calibrator/opencv_calibrator.cpp
   src/calibrator/opencv_fisheye_calibrator.cpp
   src/calibrator/opencv_omnidir_calibrator.cpp

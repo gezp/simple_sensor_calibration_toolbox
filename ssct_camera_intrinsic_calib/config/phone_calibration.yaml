@@ -1,11 +1,23 @@
 # calibrator_type:
 #   opencv_calibrator: pinhole_radtan, cv::calibrateCamera
 calibrator_type: opencv_calibrator
-opencv_calibrator:
+chessboard_detector:
+  cols: 11
+  rows: 7
+  size: 0.0326
+image_picker:
+  rows: 3
+  cols: 3
+  min_cell_coverage: 0.30
+  min_board_area_ratio: 0.04
+  min_corner_angle_deg: 40.0
+  max_corner_angle_deg: 140.0
+  min_move_ratio: 0.08
+  min_new_area_ratio: 0.005
+  min_angle_change_deg: 5.0
   min_valid_image: 15
-  pattern_detector:
-    pattern_type: chessboard
-    chessboard:
-        cols: 11
-        rows: 7
-        size: 0.0326
+  max_valid_image: 60
+  size_max_ratio: 0.20
+  size_span_ratio: 0.10
+  tilt_span_deg: 15.0
+  mask_scale: 4

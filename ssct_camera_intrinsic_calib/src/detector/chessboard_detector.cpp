@@ -19,10 +19,10 @@ namespace ssct_camera_intrinsic_calib
 
 ChessboardDetector::ChessboardDetector(const YAML::Node & config)
 {
-  int corner_cols = config["chessboard"]["cols"].as<int>();
-  int corner_rows = config["chessboard"]["rows"].as<int>();
+  int corner_cols = config["cols"].as<int>();
+  int corner_rows = config["rows"].as<int>();
   corner_size_ = cv::Size(corner_cols, corner_rows);
-  float grid_size = config["chessboard"]["size"].as<float>();
+  float grid_size = config["size"].as<float>();
   // generate 3D corner points
   for (int i = 0; i < corner_rows; i++) {
     for (int j = 0; j < corner_cols; j++) {
@@ -42,6 +42,14 @@ bool ChessboardDetector::detect(
   cv::TermCriteria criteria(cv::TermCriteria::EPS | cv::TermCriteria::EPS, 50, 0.001);
   cv::cornerSubPix(gray_image, corners, cv::Size(5, 5), cv::Size(-1, -1), criteria);
   return true;
+}
+
+std::array<cv::Point2f, 4> ChessboardDetector::calculate_board_corners(
+  const std::vector<cv::Point2f> & corners) const
+{
+  const size_t last = corners.size() - 1;
+  const size_t cols = static_cast<size_t>(corner_size_.width);
+  return {corners[0], corners[cols - 1], corners[last], corners[last - cols + 1]};
 }
 
 const cv::Size & ChessboardDetector::get_corner_size() const
