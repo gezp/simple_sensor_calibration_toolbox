@@ -1,4 +1,4 @@
-// Copyright 2025 Gezp (https://github.com/gezp).
+// Copyright 2026 Gezp (https://github.com/gezp).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -66,23 +66,23 @@ bool parse_extrinsic_param(const ssct_interfaces::msg::ExtrinsicParam & msg, Eig
 
 }  // namespace
 
-CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
+ManualCalibrationNode::ManualCalibrationNode(const rclcpp::NodeOptions & options)
 {
-  node_ = std::make_shared<rclcpp::Node>("ssct_lidar_lidar_calib_node", options);
-  std::string calibrator_config;
+  node_ = std::make_shared<rclcpp::Node>("ssct_lidar_lidar_manual_calib_node", options);
+  std::string calibration_config;
   node_->declare_parameter("target_frame_id", target_frame_id_);
   node_->declare_parameter("source_frame_id", source_frame_id_);
-  node_->declare_parameter("calibrator_config", calibrator_config);
+  node_->declare_parameter("calibration_config", calibration_config);
   node_->declare_parameter("initial_calibration_file", initial_calibration_file_);
   node_->declare_parameter("output_calibration_file", output_calibration_file_);
   node_->get_parameter("target_frame_id", target_frame_id_);
   node_->get_parameter("source_frame_id", source_frame_id_);
-  node_->get_parameter("calibrator_config", calibrator_config);
+  node_->get_parameter("calibration_config", calibration_config);
   node_->get_parameter("initial_calibration_file", initial_calibration_file_);
   node_->get_parameter("output_calibration_file", output_calibration_file_);
-  RCLCPP_INFO(node_->get_logger(), "calibrator_config: [%s]", calibrator_config.c_str());
-  if (calibrator_config == "" || (!std::filesystem::exists(calibrator_config))) {
-    RCLCPP_FATAL(node_->get_logger(), "calibrator_config is invalid");
+  RCLCPP_INFO(node_->get_logger(), "calibration_config: [%s]", calibration_config.c_str());
+  if (calibration_config == "" || (!std::filesystem::exists(calibration_config))) {
+    RCLCPP_FATAL(node_->get_logger(), "calibration_config is invalid");
     return;
   }
   RCLCPP_INFO(
@@ -110,21 +110,26 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
   }
   T_target_source_ = extrinsic_param.transform;
   // config
-  YAML::Node config_node = YAML::LoadFile(calibrator_config);
-  auto sync_node = config_node["sync"];
-  if (sync_node.IsDefined() && sync_node.IsMap()) {
-    if (sync_node["source_time_offset"].IsDefined()) {
-      source_time_offset_ = sync_node["source_time_offset"].as<double>();
+  try {
+    YAML::Node config_node = YAML::LoadFile(calibration_config);
+    auto sync_node = config_node["sync"];
+    if (sync_node.IsDefined() && sync_node.IsMap()) {
+      if (sync_node["source_time_offset"].IsDefined()) {
+        source_time_offset_ = sync_node["source_time_offset"].as<double>();
+      }
+      if (sync_node["max_time_diff"].IsDefined()) {
+        max_time_diff_ = sync_node["max_time_diff"].as<double>();
+      }
+      if (sync_node["timeout"].IsDefined()) {
+        capture_timeout_ = sync_node["timeout"].as<double>();
+      }
     }
-    if (sync_node["max_time_diff"].IsDefined()) {
-      max_time_diff_ = sync_node["max_time_diff"].as<double>();
-    }
-    if (sync_node["timeout"].IsDefined()) {
-      capture_timeout_ = sync_node["timeout"].as<double>();
-    }
+  } catch (const YAML::Exception & e) {
+    RCLCPP_FATAL(node_->get_logger(), "failed to load calibration config: %s", e.what());
+    return;
   }
   std::string topic_name_prefix =
-    "/calibration/ssct_lidar_lidar_calib/" + target_frame_id_ + "_tf_" + source_frame_id_;
+    "/calibration/ssct_lidar_lidar_manual_calib/" + target_frame_id_ + "_tf_" + source_frame_id_;
   target_topic_ = topic_name_prefix + "/target_pointcloud";
   source_topic_ = topic_name_prefix + "/source_pointcloud";
   // pub&sub
@@ -202,7 +207,7 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
     });
 }
 
-CalibrationNode::~CalibrationNode()
+ManualCalibrationNode::~ManualCalibrationNode()
 {
   exit_ = true;
   if (run_thread_) {
@@ -210,7 +215,7 @@ CalibrationNode::~CalibrationNode()
   }
 }
 
-void CalibrationNode::publish_initial_params()
+void ManualCalibrationNode::publish_initial_params()
 {
   ssct_interfaces::msg::CalibrationParams msg;
   msg.timestamp = node_->get_clock()->now();
@@ -219,7 +224,7 @@ void CalibrationNode::publish_initial_params()
   params_pub_->publish(msg);
 }
 
-void CalibrationNode::on_result_params(
+void ManualCalibrationNode::on_result_params(
   const ssct_interfaces::msg::CalibrationParams::SharedPtr msg)
 {
   for (const auto & extrinsic : msg->extrinsic_params) {
@@ -244,7 +249,7 @@ void CalibrationNode::on_result_params(
     source_frame_id_.c_str(), target_frame_id_.c_str());
 }
 
-bool CalibrationNode::read_data(SensorData & data)
+bool ManualCalibrationNode::read_data(SensorData & data)
 {
   std::deque<CloudData> clouds;
   target_sub_->read(clouds);
@@ -286,7 +291,7 @@ bool CalibrationNode::read_data(SensorData & data)
   return true;
 }
 
-void CalibrationNode::clear_data()
+void ManualCalibrationNode::clear_data()
 {
   target_sub_->clear();
   source_sub_->clear();
@@ -294,7 +299,7 @@ void CalibrationNode::clear_data()
   source_buffer_.clear();
 }
 
-void CalibrationNode::process_command(const ssct_interfaces::msg::CalibrationCommand & msg)
+void ManualCalibrationNode::process_command(const ssct_interfaces::msg::CalibrationCommand & msg)
 {
   if (msg.command == ssct_interfaces::msg::CalibrationCommand::RESET) {
     state_ = ssct_interfaces::msg::CalibrationStatus::READY;
@@ -323,7 +328,7 @@ void CalibrationNode::process_command(const ssct_interfaces::msg::CalibrationCom
   }
 }
 
-void CalibrationNode::process_save_requests()
+void ManualCalibrationNode::process_save_requests()
 {
   std::deque<SaveRequest> requests;
   {
@@ -341,7 +346,9 @@ void CalibrationNode::process_save_requests()
   }
 }
 
-void CalibrationNode::update_status_msg(uint8_t state, const std::string & info, uint8_t progress)
+void ManualCalibrationNode::update_status_msg(
+  uint8_t state, const std::string & info,
+  uint8_t progress)
 {
   std::lock_guard<std::mutex> lock(status_mutex_);
   status_msg_.timestamp = node_->get_clock()->now();
@@ -350,7 +357,7 @@ void CalibrationNode::update_status_msg(uint8_t state, const std::string & info,
   status_msg_.progress = progress;
 }
 
-void CalibrationNode::save_result(const Eigen::Matrix4d & T_target_source)
+void ManualCalibrationNode::save_result(const Eigen::Matrix4d & T_target_source)
 {
   if (output_calibration_file_ == "") {
     RCLCPP_FATAL(node_->get_logger(), "failed to save result, no output_calibration_file!");
@@ -382,7 +389,7 @@ void CalibrationNode::save_result(const Eigen::Matrix4d & T_target_source)
   }
 }
 
-bool CalibrationNode::run()
+bool ManualCalibrationNode::run()
 {
   // process the latest command
   {

@@ -1,4 +1,4 @@
-// Copyright 2025 Gezp (https://github.com/gezp).
+// Copyright 2026 Gezp (https://github.com/gezp).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<ssct_lidar_lidar_calib::CalibrationNode>();
+  auto node = std::make_shared<ssct_lidar_lidar_calib::ManualCalibrationNode>();
   rclcpp::spin(node->get_node_base_interface());
   rclcpp::shutdown();
   return 0;
