@@ -26,6 +26,7 @@ geometry_msgs::msg::Transform to_transform_msg(Eigen::Matrix4d pose)
 {
   geometry_msgs::msg::Transform msg;
   Eigen::Quaterniond q(pose.block<3, 3>(0, 0));
+  q.normalize();
   msg.translation.x = pose(0, 3);
   msg.translation.y = pose(1, 3);
   msg.translation.z = pose(2, 3);

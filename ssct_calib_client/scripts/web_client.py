@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright 2024 Gezp (https://github.com/gezp).
+# Copyright 2026 Gezp (https://github.com/gezp).
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -81,10 +81,10 @@ def status_dict(msg):
 
 
 MODES = [
-    {'id': 'generic', 'url': '/static/modes/generic/index.js'},
-    {'id': 'camera_intrinsic', 'url': '/static/modes/camera_intrinsic/index.js'},
-    {'id': 'lidar_cam_manual', 'url': '/static/modes/lidar_cam_manual/index.js'},
-    {'id': 'lidar_lidar_manual', 'url': '/static/modes/lidar_lidar_manual/index.js'},
+    {'id': 'generic_calib', 'url': '/static/modes/generic_calib/index.js'},
+    {'id': 'camera_intrinsic_calib', 'url': '/static/modes/camera_intrinsic_calib/index.js'},
+    {'id': 'lidar_cam_manual_calib', 'url': '/static/modes/lidar_cam_manual_calib/index.js'},
+    {'id': 'lidar_lidar_manual_calib', 'url': '/static/modes/lidar_lidar_manual_calib/index.js'},
 ]
 
 PARAMS_QOS = QoSProfile(
@@ -486,12 +486,9 @@ class Session:
             self.event.set()
             return
         msg = CalibrationCommand()
+        msg.timestamp = self.ros_node.get_clock().now().to_msg()
         name = request.get('command')
-        if name == 'custom':
-            msg.command = CalibrationCommand.CUSTOM_KEY_VAULE
-            msg.key = str(request.get('key', ''))
-            msg.value = float(request.get('value', 0.0))
-        elif name in COMMANDS:
+        if name in COMMANDS:
             msg.command = COMMANDS[name]
         else:
             self.send_ctrl({'type': 'error', 'message': f'unknown command: {name}'})
@@ -576,7 +573,7 @@ def read_settings(node):
     return {
         'host': node.declare_parameter('host', '0.0.0.0').value,
         'port': node.declare_parameter('port', 8080).value,
-        'mode': node.declare_parameter('mode', 'generic').value,
+        'mode': node.declare_parameter('mode', 'generic_calib').value,
         'jpeg_quality': node.declare_parameter('jpeg_quality', 80).value,
         'max_image_width': node.declare_parameter('max_image_width', 1280).value,
         'cloud_max_points': node.declare_parameter('cloud_max_points', 20000).value,

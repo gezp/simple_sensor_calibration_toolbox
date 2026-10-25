@@ -209,7 +209,7 @@ async function loadModes(config) {
     }),
   );
   let mode = modes.find((item) => item.id === config.mode);
-  if (!mode) mode = modes.find((item) => item.id === 'generic');
+  if (!mode) mode = modes.find((item) => item.id === 'generic_calib');
   if (!mode) mode = modes[0] || null;
   setMode(mode?.id || null);
   state.ready = true;
@@ -291,7 +291,7 @@ dialogConnectEl.addEventListener('click', () => {
   const picked = topicListEl.querySelector('input[name="topic"]:checked');
   if (!picked) return;
   dialogEl.close();
-  if (state.mode === 'generic') {
+  if (state.mode === 'generic_calib') {
     const match = modeForTopic(picked.value);
     if (match) setMode(match.id);
   }

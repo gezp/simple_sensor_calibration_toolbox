@@ -19,52 +19,11 @@
 #include <iterator>
 #include <vector>
 
+#include "ssct_common/calib_param_msg_utils.hpp"
 #include "ssct_lidar_lidar_calib/time_sync.hpp"
 
 namespace ssct_lidar_lidar_calib
 {
-namespace
-{
-
-ssct_interfaces::msg::ExtrinsicParam make_extrinsic_param(
-  const std::string & frame_id, const std::string & child_frame_id, const Eigen::Matrix4d & T)
-{
-  ssct_interfaces::msg::ExtrinsicParam msg;
-  msg.frame_id = frame_id;
-  msg.child_frame_id = child_frame_id;
-  msg.transform.translation.x = T(0, 3);
-  msg.transform.translation.y = T(1, 3);
-  msg.transform.translation.z = T(2, 3);
-  Eigen::Quaterniond q(T.block<3, 3>(0, 0));
-  q.normalize();
-  msg.transform.rotation.x = q.x();
-  msg.transform.rotation.y = q.y();
-  msg.transform.rotation.z = q.z();
-  msg.transform.rotation.w = q.w();
-  return msg;
-}
-
-bool parse_extrinsic_param(const ssct_interfaces::msg::ExtrinsicParam & msg, Eigen::Matrix4d & T)
-{
-  Eigen::Quaterniond q(
-    msg.transform.rotation.w, msg.transform.rotation.x, msg.transform.rotation.y,
-    msg.transform.rotation.z);
-  if (q.norm() < 1e-6) {
-    return false;
-  }
-  q.normalize();
-  T = Eigen::Matrix4d::Identity();
-  T.block<3, 3>(0, 0) = q.toRotationMatrix();
-  if (T.block<3, 3>(0, 0).determinant() < 0.0) {
-    return false;
-  }
-  T(0, 3) = msg.transform.translation.x;
-  T(1, 3) = msg.transform.translation.y;
-  T(2, 3) = msg.transform.translation.z;
-  return true;
-}
-
-}  // namespace
 
 ManualCalibrationNode::ManualCalibrationNode(const rclcpp::NodeOptions & options)
 {
@@ -219,8 +178,9 @@ void ManualCalibrationNode::publish_initial_params()
 {
   ssct_interfaces::msg::CalibrationParams msg;
   msg.timestamp = node_->get_clock()->now();
-  msg.extrinsic_params.push_back(
-    make_extrinsic_param(target_frame_id_, source_frame_id_, T_target_source_));
+  const ssct_common::ExtrinsicParam extrinsic{
+    target_frame_id_, source_frame_id_, T_target_source_};
+  msg.extrinsic_params.push_back(ssct_common::to_ros_msg(extrinsic));
   params_pub_->publish(msg);
 }
 
@@ -231,14 +191,14 @@ void ManualCalibrationNode::on_result_params(
     if (extrinsic.frame_id != target_frame_id_ || extrinsic.child_frame_id != source_frame_id_) {
       continue;
     }
-    Eigen::Matrix4d T;
-    if (!parse_extrinsic_param(extrinsic, T)) {
+    ssct_common::ExtrinsicParam param;
+    if (!ssct_common::from_ros_msg(extrinsic, param)) {
       RCLCPP_WARN(node_->get_logger(), "ignore invalid calibration result.");
       return;
     }
     {
       std::lock_guard<std::mutex> lock(result_mutex_);
-      T_result_ = T;
+      T_result_ = param.transform;
       has_result_ = true;
     }
     RCLCPP_INFO(node_->get_logger(), "received calibration result.");
@@ -320,9 +280,6 @@ void ManualCalibrationNode::process_command(const ssct_interfaces::msg::Calibrat
     clear_data();
     capture_start_time_ = std::chrono::steady_clock::now();
     update_status_msg(state_, "waiting for synchronized target and source pointclouds.", 1);
-  } else if (msg.command == ssct_interfaces::msg::CalibrationCommand::CUSTOM_KEY_VAULE) {
-    RCLCPP_WARN(
-      node_->get_logger(), "unsupported command CUSTOM_KEY_VAULE: %s", msg.key.c_str());
   } else {
     RCLCPP_WARN(node_->get_logger(), "unsupported calibration command: %d", msg.command);
   }

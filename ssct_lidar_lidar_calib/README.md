@@ -28,7 +28,7 @@ ros2 launch ssct_lidar_lidar_calib manual_calib_demo.launch.py source:=left
 另开终端启动 Web 客户端
 
 ```bash
-ros2 launch ssct_calib_client web_client.launch.py mode:=lidar_lidar_manual
+ros2 launch ssct_calib_client web_client.launch.py mode:=lidar_lidar_manual_calib
 ```
 
 浏览器打开 `http://<host>:8080`，在 `激光雷达手动标定` 模式下：

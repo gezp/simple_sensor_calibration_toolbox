@@ -31,7 +31,7 @@ ros2 launch ssct_camera_intrinsic_calib demo.launch.py
 另开终端启动 Web 客户端，浏览器打开 `http://<host>:8080`：
 
 ```bash
-ros2 launch ssct_calib_client web_client.launch.py mode:=camera_intrinsic
+ros2 launch ssct_calib_client web_client.launch.py mode:=camera_intrinsic_calib
 ```
 
 ## Reference

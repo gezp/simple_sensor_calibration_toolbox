@@ -51,6 +51,7 @@ add_library(${PROJECT_NAME} SHARED
   src/dummy_sensor/dummy_imu_node.cpp
   # utils
   src/calib_param_manager.cpp
+  src/calib_param_msg_utils.cpp
   src/msg_utils.cpp
   src/tic_toc.cpp
 )
@@ -98,11 +99,6 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-# install executable scripts
-install(PROGRAMS
-  scripts/calibration_client.py
-  DESTINATION lib/${PROJECT_NAME})
-
 # install directories
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
@@ -118,6 +114,8 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   ament_add_gtest(test_calib_param_manager test/test_calib_param_manager.cpp)
   target_link_libraries(test_calib_param_manager ${PROJECT_NAME})
+  ament_add_gtest(test_calib_param_msg_utils test/test_calib_param_msg_utils.cpp)
+  target_link_libraries(test_calib_param_msg_utils ${PROJECT_NAME})
 endif()
 
 ament_package()

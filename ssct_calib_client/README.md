@@ -20,16 +20,16 @@ ros2 launch ssct_calib_client web_client.launch.py
 |---|---|---|
 | `host` | `0.0.0.0` | 监听地址 |
 | `port` | `8080` | HTTP 端口 |
-| `mode` | `generic` | 初始模式：`generic` / `camera_intrinsic` / `lidar_cam_manual` / `lidar_lidar_manual` |
+| `mode` | `generic_calib` | 初始模式：`generic_calib` / `camera_intrinsic_calib` / `lidar_cam_manual_calib` / `lidar_lidar_manual_calib` |
 
 ## 模式
 
 | 模式 | 标题栏 |
 |---|---|
-| `generic` | 通用标定 |
-| `camera_intrinsic` | 相机内参标定 |
-| `lidar_cam_manual` | 激光相机手动标定 |
-| `lidar_lidar_manual` | 激光雷达手动标定 |
+| `generic_calib` | 通用标定 |
+| `camera_intrinsic_calib` | 相机内参标定 |
+| `lidar_cam_manual_calib` | 激光相机手动标定 |
+| `lidar_lidar_manual_calib` | 激光雷达手动标定 |
 
 点击 `connect` 选择 topic，点击 `disconnect` 断开。切换模式会重置当前连接和状态。通用标定模式下连接已实现的标定类型时，自动切换到对应模式。
 

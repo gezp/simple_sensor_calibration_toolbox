@@ -1,5 +1,5 @@
 // Shared calibration panel laid out like the Python Qt clients:
-// metadata, debug image, status/progress, info, then commands and optional axes.
+// metadata, debug image, status/progress, info, then commands.
 
 import { createCloudView } from './pointcloud.js';
 
@@ -74,7 +74,6 @@ export function createPanel(root, ctx, { image = true, cloud = false } = {}) {
       <section class="commands">
         <div class="field-label">calibration command:</div>
         <div class="row" data-basic></div>
-        <div data-axes></div>
       </section>
     </section>`;
 

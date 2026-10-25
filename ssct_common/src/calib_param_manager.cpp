@@ -78,6 +78,12 @@ bool CalibParamManager::get_camera_intrinsic_param(
   return true;
 }
 
+const std::map<std::string, CameraIntrinsicParam> &
+CalibParamManager::camera_intrinsic_params() const
+{
+  return camera_intrinsic_params_;
+}
+
 void CalibParamManager::remove_camera_intrinsic_param(const std::string & frame_id)
 {
   auto it = camera_intrinsic_params_.find(frame_id);
@@ -139,6 +145,11 @@ bool CalibParamManager::get_extrinsic_param(
   }
   param = it->second;
   return true;
+}
+
+const std::map<std::string, ExtrinsicParam> & CalibParamManager::extrinsic_params() const
+{
+  return extrinsic_params_;
 }
 
 void CalibParamManager::remove_extrinsic_param(

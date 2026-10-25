@@ -19,32 +19,11 @@
 #include <filesystem>
 #include <vector>
 
+#include "ssct_common/calib_param_msg_utils.hpp"
 #include "ssct_lidar_lidar_calib/time_sync.hpp"
 
 namespace ssct_lidar_lidar_calib
 {
-namespace
-{
-
-ssct_interfaces::msg::ExtrinsicParam make_extrinsic_param(
-  const std::string & frame_id, const std::string & child_frame_id, const Eigen::Matrix4d & T)
-{
-  ssct_interfaces::msg::ExtrinsicParam msg;
-  msg.frame_id = frame_id;
-  msg.child_frame_id = child_frame_id;
-  msg.transform.translation.x = T(0, 3);
-  msg.transform.translation.y = T(1, 3);
-  msg.transform.translation.z = T(2, 3);
-  Eigen::Quaterniond q(T.block<3, 3>(0, 0));
-  q.normalize();
-  msg.transform.rotation.x = q.x();
-  msg.transform.rotation.y = q.y();
-  msg.transform.rotation.z = q.z();
-  msg.transform.rotation.w = q.w();
-  return msg;
-}
-
-}  // namespace
 
 CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
 {
@@ -197,8 +176,9 @@ void CalibrationNode::publish_initial_params()
 {
   ssct_interfaces::msg::CalibrationParams msg;
   msg.timestamp = node_->get_clock()->now();
-  msg.extrinsic_params.push_back(
-    make_extrinsic_param(target_frame_id_, source_frame_id_, T_target_source_));
+  const ssct_common::ExtrinsicParam extrinsic{
+    target_frame_id_, source_frame_id_, T_target_source_};
+  msg.extrinsic_params.push_back(ssct_common::to_ros_msg(extrinsic));
   params_pub_->publish(msg);
 }
 
@@ -206,8 +186,9 @@ void CalibrationNode::publish_result_params(const Eigen::Matrix4d & T_target_sou
 {
   ssct_interfaces::msg::CalibrationParams msg;
   msg.timestamp = node_->get_clock()->now();
-  msg.extrinsic_params.push_back(
-    make_extrinsic_param(target_frame_id_, source_frame_id_, T_target_source));
+  const ssct_common::ExtrinsicParam extrinsic{
+    target_frame_id_, source_frame_id_, T_target_source};
+  msg.extrinsic_params.push_back(ssct_common::to_ros_msg(extrinsic));
   result_pub_->publish(msg);
 }
 
@@ -283,9 +264,6 @@ void CalibrationNode::process_command(
     clear_data();
     capture_start_time_ = std::chrono::steady_clock::now();
     update_status_msg(state_, "waiting for synchronized target and source pointclouds.", 1);
-  } else if (msg.command == ssct_interfaces::msg::CalibrationCommand::CUSTOM_KEY_VAULE) {
-    RCLCPP_WARN(
-      node_->get_logger(), "unsupported command CUSTOM_KEY_VAULE: %s", msg.key.c_str());
   } else {
     RCLCPP_WARN(node_->get_logger(), "unsupported calibration command: %d", msg.command);
   }
