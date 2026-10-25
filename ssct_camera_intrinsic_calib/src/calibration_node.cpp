@@ -62,7 +62,29 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
 
   // calibrator
   YAML::Node config_node = YAML::LoadFile(calibrator_config);
-  calibrator_ = std::make_shared<PinholeCalibrator>(config_node["pinhole_calibrator"]);
+  try {
+    std::string calibrator_type = config_node["calibrator_type"].as<std::string>();
+    YAML::Node calibrator_config_node = config_node[calibrator_type];
+    if (!calibrator_config_node) {
+      RCLCPP_FATAL(
+        node_->get_logger(), "missing config for calibrator_type: %s", calibrator_type.c_str());
+      return;
+    }
+    if (calibrator_type == "opencv_calibrator") {
+      calibrator_ = std::make_shared<OpenCVCalibrator>(calibrator_config_node);
+    } else if (calibrator_type == "opencv_fisheye_calibrator") {
+      calibrator_ = std::make_shared<OpenCVFisheyeCalibrator>(calibrator_config_node);
+    } else if (calibrator_type == "opencv_omnidir_calibrator") {
+      calibrator_ = std::make_shared<OpenCVOmnidirCalibrator>(calibrator_config_node);
+    } else {
+      RCLCPP_FATAL(
+        node_->get_logger(), "unsupported calibrator_type: %s", calibrator_type.c_str());
+      return;
+    }
+  } catch (const std::exception & e) {
+    RCLCPP_FATAL(node_->get_logger(), "invalid calibrator config: %s", e.what());
+    return;
+  }
   calib_param_manager_ = std::make_shared<ssct_common::CalibParamManager>();
   // initialize status
   status_msg_.frame_id = frame_id_;

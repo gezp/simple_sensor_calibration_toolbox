@@ -1,9 +1,29 @@
-calibrator_type: pinhole_calibrator
-pinhole_calibrator:
-    min_valid_image: 15
-    pattern_detector:
-      pattern_type: chessboard
-      chessboard:
-          cols: 15
-          rows: 17
-          size: 0.05
+# calibrator_type:
+#   opencv_calibrator: pinhole_radtan, cv::calibrateCamera
+#   opencv_fisheye_calibrator: ftheta_kb (Kannala-Brandt), cv::fisheye::calibrate
+#   opencv_omnidir_calibrator: mei_radtan (Mei), cv::omnidir::calibrate
+calibrator_type: opencv_calibrator
+opencv_calibrator:
+  min_valid_image: 15
+  pattern_detector:
+    pattern_type: chessboard
+    chessboard:
+        cols: 15
+        rows: 17
+        size: 0.05
+opencv_fisheye_calibrator:
+  min_valid_image: 15
+  pattern_detector:
+    pattern_type: chessboard
+    chessboard:
+        cols: 15
+        rows: 17
+        size: 0.05
+opencv_omnidir_calibrator:
+  min_valid_image: 15
+  pattern_detector:
+    pattern_type: chessboard
+    chessboard:
+        cols: 15
+        rows: 17
+        size: 0.05

@@ -41,8 +41,8 @@ colcon build --symlink-install
 传感器内参标定
 
 - [x] 实现针孔相机内参标定: `ssct_camera_intrinsic_calib`
-- [ ] 实现鱼眼相机内参标定: `ssct_camera_intrinsic_calib`
-- [ ] 实现全景相机内参标定: `ssct_camera_intrinsic_calib`
+- [x] 实现鱼眼相机内参标定: `ssct_camera_intrinsic_calib`
+- [x] 实现全景相机内参标定: `ssct_camera_intrinsic_calib`
 
 sensor2sensor外参标定
 

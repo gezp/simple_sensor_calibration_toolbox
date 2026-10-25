@@ -1,10 +1,12 @@
 # ssct_camera_intrinsic_calib
 
-这个包提供了相机内参标定的工具，目前已经实现的`calibrator`有：
+这个包提供了相机内参标定的工具，通过配置文件`config/calibrator.yaml`中的`calibrator_type`选择标定器：
 
-* `pinhole_calibrator` ：标定`pinhole_radtan`相机模型，适用于镜头畸变较小的相机。
-  * 目前仅支持棋盘格标定板。
-* `fisheye_calibrator` (TODO)
+* `opencv_calibrator`：标定`pinhole_radtan`相机模型（针孔 + 径向/切向畸变），基于`cv::calibrateCamera`，适用于普通镜头。
+* `opencv_fisheye_calibrator`：标定`ftheta_kb`鱼眼相机模型（Kannala-Brandt），基于`cv::fisheye::calibrate`。
+* `opencv_omnidir_calibrator`：标定`mei_radtan`全景/全向相机模型（Mei），基于`cv::omnidir::calibrate`。
+
+每个标定器的配置写在与其同名的配置段中，例如 `opencv_calibrator:`。目前仅支持棋盘格标定板。
 
 ## Quick Start
 
