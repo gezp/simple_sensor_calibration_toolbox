@@ -20,50 +20,10 @@
 #include <fstream>
 #include <iterator>
 
+#include "ssct_common/calib_param_msg_utils.hpp"
+
 namespace ssct_lidar_cam_calib
 {
-namespace
-{
-
-ssct_interfaces::msg::ExtrinsicParam make_extrinsic_param(
-  const std::string & frame_id, const std::string & child_frame_id, const Eigen::Matrix4d & T)
-{
-  ssct_interfaces::msg::ExtrinsicParam msg;
-  msg.frame_id = frame_id;
-  msg.child_frame_id = child_frame_id;
-  msg.transform.translation.x = T(0, 3);
-  msg.transform.translation.y = T(1, 3);
-  msg.transform.translation.z = T(2, 3);
-  Eigen::Quaterniond q(T.block<3, 3>(0, 0));
-  q.normalize();
-  msg.transform.rotation.x = q.x();
-  msg.transform.rotation.y = q.y();
-  msg.transform.rotation.z = q.z();
-  msg.transform.rotation.w = q.w();
-  return msg;
-}
-
-bool parse_extrinsic_param(const ssct_interfaces::msg::ExtrinsicParam & msg, Eigen::Matrix4d & T)
-{
-  Eigen::Quaterniond q(
-    msg.transform.rotation.w, msg.transform.rotation.x, msg.transform.rotation.y,
-    msg.transform.rotation.z);
-  if (q.norm() < 1e-6) {
-    return false;
-  }
-  q.normalize();
-  T = Eigen::Matrix4d::Identity();
-  T.block<3, 3>(0, 0) = q.toRotationMatrix();
-  if (T.block<3, 3>(0, 0).determinant() < 0.0) {
-    return false;
-  }
-  T(0, 3) = msg.transform.translation.x;
-  T(1, 3) = msg.transform.translation.y;
-  T(2, 3) = msg.transform.translation.z;
-  return true;
-}
-
-}  // namespace
 
 CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
 {
@@ -228,22 +188,10 @@ void CalibrationNode::publish_initial_params()
   const auto & target = image_undistorter_->target_param();
   ssct_interfaces::msg::CalibrationParams msg;
   msg.timestamp = node_->get_clock()->now();
-  ssct_interfaces::msg::CameraIntrinsicParam camera;
-  camera.frame_id = target.frame_id;
-  camera.height = target.height;
-  camera.width = target.width;
-  camera.type = target.type;
-  camera.intrinsics.reserve(target.intrinsics.size());
-  for (auto value : target.intrinsics) {
-    camera.intrinsics.push_back(static_cast<float>(value));
-  }
-  camera.distortion_coeffs.reserve(target.distortion_coeffs.size());
-  for (auto value : target.distortion_coeffs) {
-    camera.distortion_coeffs.push_back(static_cast<float>(value));
-  }
-  msg.camera_intrinsic_params.push_back(camera);
-  msg.extrinsic_params.push_back(
-    make_extrinsic_param(camera_frame_id_, lidar_frame_id_, T_camera_lidar_));
+  msg.camera_intrinsic_params.push_back(ssct_common::to_ros_msg(target));
+  const ssct_common::ExtrinsicParam extrinsic{
+    camera_frame_id_, lidar_frame_id_, T_camera_lidar_};
+  msg.extrinsic_params.push_back(ssct_common::to_ros_msg(extrinsic));
   params_pub_->publish(msg);
 }
 
@@ -254,14 +202,14 @@ void CalibrationNode::on_result_params(
     if (extrinsic.frame_id != camera_frame_id_ || extrinsic.child_frame_id != lidar_frame_id_) {
       continue;
     }
-    Eigen::Matrix4d T;
-    if (!parse_extrinsic_param(extrinsic, T)) {
+    ssct_common::ExtrinsicParam param;
+    if (!ssct_common::from_ros_msg(extrinsic, param)) {
       RCLCPP_WARN(node_->get_logger(), "ignore invalid calibration result.");
       return;
     }
     {
       std::lock_guard<std::mutex> lock(result_mutex_);
-      T_result_ = T;
+      T_result_ = param.transform;
       has_result_ = true;
     }
     RCLCPP_INFO(node_->get_logger(), "received calibration result.");

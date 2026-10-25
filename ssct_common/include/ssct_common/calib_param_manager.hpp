@@ -36,6 +36,7 @@ public:
   // for camera intrinsic params
   bool add_camera_intrinsic_param(const CameraIntrinsicParam & param);
   bool get_camera_intrinsic_param(const std::string & frame_id, CameraIntrinsicParam & param);
+  const std::map<std::string, CameraIntrinsicParam> & camera_intrinsic_params() const;
   void remove_camera_intrinsic_param(const std::string & frame_id);
   // for imu intrinsic params
   bool add_imu_intrinsic_param(const ImuIntrinsicParam & param);
@@ -48,6 +49,7 @@ public:
     const Eigen::Matrix4d & transform);
   bool get_extrinsic_param(
     const std::string & frame_id, const std::string & child_frame_id, ExtrinsicParam & param);
+  const std::map<std::string, ExtrinsicParam> & extrinsic_params() const;
   void remove_extrinsic_param(const std::string & frame_id, const std::string & child_frame_id);
   // save & load
   bool save(const std::string & file);
