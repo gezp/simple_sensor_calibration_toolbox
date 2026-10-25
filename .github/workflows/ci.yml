@@ -31,9 +31,9 @@ jobs:
       - name: Test ssct_camera_intrinsic_calib
         run: |
           /usr/bin/bash .github/workflows/colcon_test.sh ssct_camera_intrinsic_calib
-      - name: Test ssct_lidar_cam_manual_calib
+      - name: Test ssct_lidar_cam_calib
         run: |
-          /usr/bin/bash .github/workflows/colcon_test.sh ssct_lidar_cam_manual_calib
+          /usr/bin/bash .github/workflows/colcon_test.sh ssct_lidar_cam_calib
       - name: Show test failures
         if: failure()
         run: |

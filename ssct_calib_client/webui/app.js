@@ -20,11 +20,16 @@ const state = {
   connected: false,
   panel: null,
   pendingImage: null,
+  pendingCloud: null,
+  pendingParams: null,
 };
 
 const ctx = {
   send(payload) {
     send({ type: 'command', ...payload });
+  },
+  result(payload) {
+    send({ type: 'result', ...payload });
   },
   requestCloud() {
     send({ type: 'cloud' });
@@ -64,6 +69,8 @@ function resetSelection() {
   state.panel = null;
   state.selected = null;
   state.pendingImage = null;
+  state.pendingCloud = null;
+  state.pendingParams = null;
   panelHost.replaceChildren();
 }
 
@@ -142,6 +149,14 @@ function onStatus(status) {
     state.panel?.image(state.pendingImage);
     state.pendingImage = null;
   }
+  if (state.pendingCloud) {
+    state.panel?.cloud(state.pendingCloud);
+    state.pendingCloud = null;
+  }
+  if (state.pendingParams) {
+    state.panel?.params(state.pendingParams);
+    state.pendingParams = null;
+  }
 }
 
 function onBinary(buffer) {
@@ -157,7 +172,12 @@ function onBinary(buffer) {
     if (state.panel) state.panel.image(blob);
     else state.pendingImage = blob;
   } else if (header.stream === 'cloud') {
-    state.panel?.cloud(new Float32Array(payload.slice().buffer));
+    const data = {
+      points: new Float32Array(payload.slice().buffer),
+      stride: header.stride || 3,
+    };
+    if (state.panel) state.panel.cloud?.(data);
+    else state.pendingCloud = data;
   }
 }
 
@@ -203,6 +223,9 @@ function onJson(message) {
     renderTopics();
   } else if (message.type === 'status') {
     onStatus(message);
+  } else if (message.type === 'params') {
+    if (state.panel) state.panel.params?.(message);
+    else state.pendingParams = message;
   } else if (message.type === 'error') {
     console.warn(message.message);
   }

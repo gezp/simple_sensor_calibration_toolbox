@@ -25,14 +25,14 @@ def generate_launch_description():
     )
     lidar_data_dir = os.path.join(data_dir, 'lidar2camera', 'lidar')
     camera_data_dir = os.path.join(data_dir, 'lidar2camera', 'camera')
-    pkg_ssct_lidar_cam_manual_calib = get_package_share_directory(
-        'ssct_lidar_cam_manual_calib'
+    pkg_ssct_lidar_cam_calib = get_package_share_directory(
+        'ssct_lidar_cam_calib'
     )
     calibrator_config = os.path.join(
-        pkg_ssct_lidar_cam_manual_calib, 'config', 'calibrator.yaml'
+        pkg_ssct_lidar_cam_calib, 'config', 'calibrator.yaml'
     )
     initial_calibration = os.path.join(
-        pkg_ssct_lidar_cam_manual_calib, 'config', 'initial_calibration.yaml'
+        pkg_ssct_lidar_cam_calib, 'config', 'initial_calibration.yaml'
     )
     output_calibration = os.path.join(
         os.environ['HOME'], 'calibration_data', 'result.yaml'
@@ -63,10 +63,10 @@ def generate_launch_description():
         ],
         output='screen',
     )
-    calibration_node = Node(
-        name='lidar_camera_calibration_node',
-        package='ssct_lidar_cam_manual_calib',
-        executable='calibration_node',
+    manual_calibration_node = Node(
+        name='lidar_camera_manual_calibration_node',
+        package='ssct_lidar_cam_calib',
+        executable='manual_calibration_node',
         parameters=[
             {
                 'camera_frame_id': 'center_camera',
@@ -82,15 +82,8 @@ def generate_launch_description():
         ],
         output='screen',
     )
-    calibration_client = Node(
-        name='calibration_client',
-        package='ssct_lidar_cam_manual_calib',
-        executable='calibration_client.py',
-        output='screen',
-    )
     ld = LaunchDescription()
     ld.add_action(dummy_lidar_node)
     ld.add_action(dummy_camera_node)
-    ld.add_action(calibration_node)
-    ld.add_action(calibration_client)
+    ld.add_action(manual_calibration_node)
     return ld

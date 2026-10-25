@@ -11,4 +11,4 @@ transforms:
         frame_id: center_camera
         child_frame_id: top_center_lidar
         translation: [-0.0322306, -0.352079, -0.574468]
-        rotation: [0.5 , -0.5 , 0.5, 0.5] # x,y,z,w
+        rotation_xyzw: [0.5 , -0.5 , 0.5, 0.5] # x,y,z,w
