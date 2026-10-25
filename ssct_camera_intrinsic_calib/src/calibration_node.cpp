@@ -24,20 +24,20 @@ namespace ssct_camera_intrinsic_calib
 CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
 {
   node_ = std::make_shared<rclcpp::Node>("ssct_camera_intrinsic_calib_node", options);
-  std::string calibrator_config;
+  std::string calibration_config;
   node_->declare_parameter("frame_id", frame_id_);
   node_->declare_parameter("output_file", output_file_);
-  node_->declare_parameter("calibrator_config", calibrator_config);
+  node_->declare_parameter("calibration_config", calibration_config);
   node_->declare_parameter("enable_compressed_image", enable_compressed_image_);
   node_->declare_parameter("autostart", autostart_);
   node_->get_parameter("frame_id", frame_id_);
   node_->get_parameter("output_file", output_file_);
-  node_->get_parameter("calibrator_config", calibrator_config);
+  node_->get_parameter("calibration_config", calibration_config);
   node_->get_parameter("enable_compressed_image", enable_compressed_image_);
   node_->get_parameter("autostart", autostart_);
-  RCLCPP_INFO(node_->get_logger(), "calibrator_config: [%s]", calibrator_config.c_str());
-  if (calibrator_config == "" || (!std::filesystem::exists(calibrator_config))) {
-    RCLCPP_FATAL(node_->get_logger(), "calibrator_config is invalid");
+  RCLCPP_INFO(node_->get_logger(), "calibration_config: [%s]", calibration_config.c_str());
+  if (calibration_config == "" || (!std::filesystem::exists(calibration_config))) {
+    RCLCPP_FATAL(node_->get_logger(), "calibration_config is invalid");
     return;
   }
   // pub&sub
@@ -61,8 +61,30 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
     std::make_shared<ssct_common::ImagePublisher>(node_, debug_topic, 100, frame_id_);
 
   // calibrator
-  YAML::Node config_node = YAML::LoadFile(calibrator_config);
-  calibrator_ = std::make_shared<PinholeCalibrator>(config_node["pinhole_calibrator"]);
+  YAML::Node config_node = YAML::LoadFile(calibration_config);
+  try {
+    std::string calibrator_type = config_node["calibrator_type"].as<std::string>();
+    YAML::Node calibration_config_node = config_node[calibrator_type];
+    if (!calibration_config_node) {
+      RCLCPP_FATAL(
+        node_->get_logger(), "missing config for calibrator_type: %s", calibrator_type.c_str());
+      return;
+    }
+    if (calibrator_type == "opencv_calibrator") {
+      calibrator_ = std::make_shared<OpenCVCalibrator>(calibration_config_node);
+    } else if (calibrator_type == "opencv_fisheye_calibrator") {
+      calibrator_ = std::make_shared<OpenCVFisheyeCalibrator>(calibration_config_node);
+    } else if (calibrator_type == "opencv_omnidir_calibrator") {
+      calibrator_ = std::make_shared<OpenCVOmnidirCalibrator>(calibration_config_node);
+    } else {
+      RCLCPP_FATAL(
+        node_->get_logger(), "unsupported calibrator_type: %s", calibrator_type.c_str());
+      return;
+    }
+  } catch (const std::exception & e) {
+    RCLCPP_FATAL(node_->get_logger(), "invalid calibrator config: %s", e.what());
+    return;
+  }
   calib_param_manager_ = std::make_shared<ssct_common::CalibParamManager>();
   // initialize status
   status_msg_.frame_id = frame_id_;
@@ -126,6 +148,7 @@ void CalibrationNode::process_command(uint8_t command)
     update_status_msg(state_, "ready.", 0);
   } else if (command == ssct_interfaces::msg::CalibrationCommand::START) {
     state_ = ssct_interfaces::msg::CalibrationStatus::CALIBRATING;
+    last_valid_image_time_ = -1.0;
     clear_data();
     update_status_msg(state_, "start to calibrating.", 1);
   } else if (command == ssct_interfaces::msg::CalibrationCommand::SAVE) {
@@ -135,7 +158,11 @@ void CalibrationNode::process_command(uint8_t command)
         "failed to save result, need be state DONE and calibrated successfully!");
       return;
     }
-    save_result();
+    if (save_result()) {
+      update_status_msg(state_, "successed to save result.", 100);
+    } else {
+      update_status_msg(state_, "failed to save result.", 100);
+    }
   } else {
     RCLCPP_FATAL(node_->get_logger(), "undefined calibration command: %d", command);
   }
@@ -150,18 +177,18 @@ void CalibrationNode::update_status_msg(uint8_t state, const std::string & info,
   status_msg_.info = info;
 }
 
-void CalibrationNode::save_result()
+bool CalibrationNode::save_result()
 {
   if (output_file_ == "") {
     RCLCPP_FATAL(node_->get_logger(), "failed to save result, no output_file");
-    return;
+    return false;
   }
   if (std::filesystem::exists(output_file_)) {
     if (!calib_param_manager_->load(output_file_)) {
       RCLCPP_FATAL(
         node_->get_logger(), "failed to load existed calibration data, %s",
         calib_param_manager_->error_message().c_str());
-      return;
+      return false;
     }
   }
   ssct_common::CameraIntrinsicParam param;
@@ -172,11 +199,18 @@ void CalibrationNode::save_result()
   param.width = image_size.width;
   param.intrinsics = calibrator_->get_intrinsics();
   param.distortion_coeffs = calibrator_->get_distortion_coeffs();
-  calib_param_manager_->add_camera_intrinsic_param(param);
+  if (!calib_param_manager_->add_camera_intrinsic_param(param)) {
+    RCLCPP_FATAL(
+      node_->get_logger(), "failed to add camera intrinsic param, %s",
+      calib_param_manager_->error_message().c_str());
+    return false;
+  }
   if (calib_param_manager_->save(output_file_)) {
     RCLCPP_INFO(node_->get_logger(), "successed to save result: %s", output_file_.c_str());
+    return true;
   } else {
     RCLCPP_INFO(node_->get_logger(), "failed to save result: %s", output_file_.c_str());
+    return false;
   }
 }
 
@@ -198,9 +232,22 @@ bool CalibrationNode::run()
       if (sensor_data_buffer_.empty()) {
         return false;
       }
-      auto sensor_data = sensor_data_buffer_.front();
-      sensor_data_buffer_.pop_front();
+      // pick the first image at least 1s after the last valid image
+      bool found = false;
+      ssct_common::ImageData sensor_data;
+      while (!sensor_data_buffer_.empty()) {
+        sensor_data = sensor_data_buffer_.front();
+        sensor_data_buffer_.pop_front();
+        if (last_valid_image_time_ < 0.0 || sensor_data.time - last_valid_image_time_ > 1.0) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        return false;
+      }
       if (calibrator_->process_image(sensor_data.image)) {
+        last_valid_image_time_ = sensor_data.time;
         // debug
         debug_image_pub_->publish(calibrator_->get_debug_image(), sensor_data.time);
       }

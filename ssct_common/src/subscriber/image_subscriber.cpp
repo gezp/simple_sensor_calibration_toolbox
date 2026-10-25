@@ -38,7 +38,7 @@ ImageSubscriber::ImageSubscriber(
         buffer_mutex_.unlock();
       };
     compressed_subscriber_ = node_->create_subscription<sensor_msgs::msg::CompressedImage>(
-      topic_name, buffer_size, msg_callback);
+      topic_name, rclcpp::QoS(buffer_size).best_effort(), msg_callback);
   } else {
     auto msg_callback = [this](const sensor_msgs::msg::Image::SharedPtr msg) {
         ImageData data;
@@ -51,8 +51,8 @@ ImageSubscriber::ImageSubscriber(
         }
         buffer_mutex_.unlock();
       };
-    subscriber_ =
-      node_->create_subscription<sensor_msgs::msg::Image>(topic_name, buffer_size, msg_callback);
+    subscriber_ = node_->create_subscription<sensor_msgs::msg::Image>(
+      topic_name, rclcpp::QoS(buffer_size).best_effort(), msg_callback);
   }
 }
 

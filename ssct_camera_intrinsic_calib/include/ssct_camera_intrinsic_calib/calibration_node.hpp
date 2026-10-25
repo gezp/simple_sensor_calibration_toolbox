@@ -23,7 +23,10 @@
 #include "ssct_common/publisher/image_publisher.hpp"
 #include "ssct_common/subscriber/image_subscriber.hpp"
 #include "ssct_common/calib_param_manager.hpp"
-#include "ssct_camera_intrinsic_calib/pinhole_calibrator.hpp"
+#include "ssct_camera_intrinsic_calib/calibrator_interface.hpp"
+#include "ssct_camera_intrinsic_calib/calibrator/opencv_calibrator.hpp"
+#include "ssct_camera_intrinsic_calib/calibrator/opencv_fisheye_calibrator.hpp"
+#include "ssct_camera_intrinsic_calib/calibrator/opencv_omnidir_calibrator.hpp"
 #include "ssct_interfaces/msg/calibration_status.hpp"
 #include "ssct_interfaces/msg/calibration_command.hpp"
 
@@ -45,7 +48,7 @@ private:
   void clear_data();
   void process_command(uint8_t command);
   void update_status_msg(uint8_t state, const std::string & info, uint8_t progress);
-  void save_result();
+  bool save_result();
   bool run();
 
 private:
@@ -55,7 +58,7 @@ private:
   rclcpp::Subscription<ssct_interfaces::msg::CalibrationCommand>::SharedPtr cmd_sub_;
   rclcpp::Publisher<ssct_interfaces::msg::CalibrationStatus>::SharedPtr status_pub_;
   std::shared_ptr<ssct_common::ImagePublisher> debug_image_pub_;
-  std::shared_ptr<PinholeCalibrator> calibrator_;
+  std::shared_ptr<CalibratorInterface> calibrator_;
   // param
   std::string frame_id_{"camera"};
   std::string output_file_;
@@ -66,6 +69,7 @@ private:
   bool exit_{false};
   // data
   std::deque<ssct_common::ImageData> sensor_data_buffer_;
+  double last_valid_image_time_{-1.0};
   std::shared_ptr<ssct_common::CalibParamManager> calib_param_manager_;
   uint8_t state_;
   bool success_{false};

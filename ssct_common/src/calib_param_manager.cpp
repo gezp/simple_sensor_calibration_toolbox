@@ -63,7 +63,12 @@ Eigen::Vector3d to_Vector3d(const std::vector<double> & data)
 
 bool CalibParamManager::add_camera_intrinsic_param(const CameraIntrinsicParam & param)
 {
-  camera_intrinsic_params_[param.frame_id] = param;
+  CameraIntrinsicParam normalized = param;
+  if (!normalize_camera_model(normalized.type) || !is_valid_camera_intrinsic_param(normalized)) {
+    error_message_ = "invalid camera intrinsic param [" + param.frame_id + "]";
+    return false;
+  }
+  camera_intrinsic_params_[normalized.frame_id] = normalized;
   return true;
 }
 
@@ -243,7 +248,10 @@ bool CalibParamManager::load(const std::string & file)
         }
         param.intrinsics = camera["intrinsics"].as<std::vector<double>>();
         param.distortion_coeffs = camera["distortion_coeffs"].as<std::vector<double>>();
-        add_camera_intrinsic_param(param);
+        if (!add_camera_intrinsic_param(param)) {
+          error_message_ = std::string("invalid camera data [") + key + "]: " + error_message_;
+          return false;
+        }
       } catch (std::exception & e) {
         error_message_ = std::string("invalid camera data [") + key + "]";
         return false;

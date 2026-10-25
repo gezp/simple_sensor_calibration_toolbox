@@ -43,15 +43,16 @@ function fthetaThetaD(theta, coeffs) {
 function createProjector(camera) {
   const k = camera.intrinsics;
   const d = camera.distortion_coeffs;
-  if (camera.model === 'ftheta') {
+  if (camera.model === 'ftheta' || camera.model === 'ftheta_kb') {
     return (x, y, z) => {
-      const f = k[0];
-      const cx = k[1];
-      const cy = k[2];
+      const fx = k[0];
+      const fy = k[1];
+      const cx = k[2];
+      const cy = k[3];
       const r = Math.hypot(x, y);
       if (r < 1e-9) return [cx, cy];
-      const rho = f * fthetaThetaD(Math.atan2(r, z), d);
-      return [cx + (rho * x) / r, cy + (rho * y) / r];
+      const thetaD = fthetaThetaD(Math.atan2(r, z), d);
+      return [cx + (fx * thetaD * x) / r, cy + (fy * thetaD * y) / r];
     };
   }
   const fx = k[0];

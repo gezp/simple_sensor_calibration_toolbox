@@ -26,7 +26,10 @@ set(dependencies
 )
 
 add_library(${PROJECT_NAME} SHARED
-  src/pinhole_calibrator.cpp
+  src/detector/chessboard_detector.cpp
+  src/calibrator/opencv_calibrator.cpp
+  src/calibrator/opencv_fisheye_calibrator.cpp
+  src/calibrator/opencv_omnidir_calibrator.cpp
   src/calibration_node.cpp
 )
 

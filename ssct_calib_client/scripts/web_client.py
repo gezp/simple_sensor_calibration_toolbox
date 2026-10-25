@@ -486,7 +486,7 @@ class Session:
             self.event.set()
             return
         msg = CalibrationCommand()
-        msg.timestamp = self.ros_node.get_clock().now().to_msg()
+        msg.timestamp = self.bridge.node.get_clock().now().to_msg()
         name = request.get('command')
         if name in COMMANDS:
             msg.command = COMMANDS[name]

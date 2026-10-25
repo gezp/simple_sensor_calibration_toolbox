@@ -94,5 +94,33 @@ TEST(CalibParamManager, save_rotation_xyzw_only)
   EXPECT_EQ(content.find("rotation:"), std::string::npos);
 }
 
+TEST(CalibParamManager, camera_model_aliases_and_coeff_counts)
+{
+  CalibParamManager manager;
+  CameraIntrinsicParam camera;
+  camera.frame_id = "camera";
+  camera.width = 640;
+  camera.height = 480;
+  camera.type = "fisheye";
+  camera.intrinsics = {500.0, 500.0, 320.0, 240.0};
+  camera.distortion_coeffs = {0.1, 0.01, 0.001, 0.0001};
+  ASSERT_TRUE(manager.add_camera_intrinsic_param(camera));
+  CameraIntrinsicParam result;
+  ASSERT_TRUE(manager.get_camera_intrinsic_param("camera", result));
+  EXPECT_EQ(result.type, "ftheta_kb");
+
+  camera.type = "omnidir";
+  camera.intrinsics = {0.5, 500.0, 500.0, 320.0, 240.0};
+  camera.distortion_coeffs = {0.1, 0.01, 0.001, 0.0001};
+  ASSERT_TRUE(manager.add_camera_intrinsic_param(camera));
+  ASSERT_TRUE(manager.get_camera_intrinsic_param("camera", result));
+  EXPECT_EQ(result.type, "mei_radtan");
+
+  camera.type = "pinhole_radtan";
+  camera.intrinsics = {500.0, 500.0, 320.0, 240.0};
+  camera.distortion_coeffs = {0.1, 0.01, 0.001, 0.0001};
+  EXPECT_FALSE(manager.add_camera_intrinsic_param(camera));
+}
+
 }  // namespace
 }  // namespace ssct_common

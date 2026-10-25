@@ -1,9 +1,0 @@
-calibrator_type: pinhole_calibrator
-pinhole_calibrator:
-    min_valid_image: 15
-    pattern_detector:
-      pattern_type: chessboard
-      chessboard:
-          cols: 15
-          rows: 17
-          size: 0.05

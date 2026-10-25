@@ -91,6 +91,9 @@ bool from_ros_msg(
   param.type = msg.type;
   param.intrinsics.assign(msg.intrinsics.begin(), msg.intrinsics.end());
   param.distortion_coeffs.assign(msg.distortion_coeffs.begin(), msg.distortion_coeffs.end());
+  if (!normalize_camera_model(param.type) || !is_valid_camera_intrinsic_param(param)) {
+    return false;
+  }
   return true;
 }
 
@@ -115,10 +118,9 @@ bool from_ros_msg(
   CalibParamManager parsed;
   for (const auto & msg_param : msg.camera_intrinsic_params) {
     CameraIntrinsicParam param;
-    if (!from_ros_msg(msg_param, param)) {
+    if (!from_ros_msg(msg_param, param) || !parsed.add_camera_intrinsic_param(param)) {
       return false;
     }
-    parsed.add_camera_intrinsic_param(param);
   }
   for (const auto & msg_param : msg.extrinsic_params) {
     ExtrinsicParam param;

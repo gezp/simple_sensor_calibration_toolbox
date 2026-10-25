@@ -28,7 +28,7 @@ namespace ssct_lidar_cam_calib
 {
 
 // Resamples images into a pinhole or ftheta target model:
-// pinhole_radtan -> pinhole, pinhole_equidistant -> ftheta.
+// pinhole_radtan -> pinhole, ftheta_kb -> ftheta_kb.
 class ImageUndistorter
 {
 public:

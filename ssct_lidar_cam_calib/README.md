@@ -46,7 +46,7 @@ sync:
     timeout: 5.0            # 秒，采集超时
 ```
 
-* 去畸变模型由源相机模型内置决定：`pinhole_radtan` 转 `pinhole`，`pinhole_equidistant` 转 `ftheta`；`omni_radtan` 不支持。
+* 去畸变模型由源相机模型内置决定：`pinhole_radtan` 转 `pinhole`，`ftheta_kb`（别名 `fisheye`）保持 `ftheta_kb`；`mei_radtan` 不支持。
 * 点云与图像使用 header stamp 配对；两路时间必须同源，不同源时用 `image_time_offset` 补偿。
 
 ## Topic
