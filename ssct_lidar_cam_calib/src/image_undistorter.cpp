@@ -62,12 +62,12 @@ double ftheta_inverse(double theta_d, const std::vector<double> & coeffs)
 
 bool is_pinhole_model(const std::string & type)
 {
-  return type == "pinhole_radtan" || type == "pinhole";
+  return ssct_common::is_pinhole_camera_model(type);
 }
 
 bool is_ftheta_model(const std::string & type)
 {
-  return type == "pinhole_equidistant" || type == "equidistant" || type == "fisheye";
+  return ssct_common::is_ftheta_camera_model(type);
 }
 
 }  // namespace
@@ -75,16 +75,14 @@ bool is_ftheta_model(const std::string & type)
 bool ImageUndistorter::init(const ssct_common::CameraIntrinsicParam & source)
 {
   source_ = source;
-  if (source_.width <= 0 || source_.height <= 0) {
-    error_message_ = "invalid source image size";
+  if (!ssct_common::normalize_camera_model(source_.type) ||
+    !ssct_common::is_valid_camera_intrinsic_param(source_))
+  {
+    error_message_ = "invalid camera intrinsic param or unsupported camera model: " + source_.type;
     return false;
   }
   if (!is_pinhole_model(source_.type) && !is_ftheta_model(source_.type)) {
     error_message_ = "unsupported camera model: " + source_.type;
-    return false;
-  }
-  if (source_.intrinsics.size() < 4) {
-    error_message_ = "camera model requires 4 intrinsics [fx, fy, cx, cy]";
     return false;
   }
   target_ = ssct_common::CameraIntrinsicParam();
@@ -109,12 +107,11 @@ bool ImageUndistorter::init(const ssct_common::CameraIntrinsicParam & source)
       K_new.at<double>(0, 2), K_new.at<double>(1, 2)};
     target_.distortion_coeffs.clear();
   } else {
-    std::vector<double> coeffs = source_.distortion_coeffs;
-    coeffs.resize(4, 0.0);
-    target_.type = "ftheta";
+    target_.type = source_.type;
     target_.intrinsics = {
-      source_.intrinsics[0], source_.intrinsics[2], source_.intrinsics[3]};
-    target_.distortion_coeffs = coeffs;
+      source_.intrinsics[0], source_.intrinsics[1],
+      source_.intrinsics[2], source_.intrinsics[3]};
+    target_.distortion_coeffs = source_.distortion_coeffs;
   }
   return build_maps();
 }
@@ -158,19 +155,20 @@ bool ImageUndistorter::unproject_target(double u, double v, Eigen::Vector3d & ra
     ray = Eigen::Vector3d((u - cx) / fx, (v - cy) / fy, 1.0);
     return true;
   }
-  const double f = target_.intrinsics[0];
-  const double cx = target_.intrinsics[1];
-  const double cy = target_.intrinsics[2];
-  const double dx = u - cx;
-  const double dy = v - cy;
-  const double rho = std::hypot(dx, dy);
+  const double fx = target_.intrinsics[0];
+  const double fy = target_.intrinsics[1];
+  const double cx = target_.intrinsics[2];
+  const double cy = target_.intrinsics[3];
+  const double x = (u - cx) / fx;
+  const double y = (v - cy) / fy;
+  const double rho = std::hypot(x, y);
   if (rho < 1e-9) {
     ray = Eigen::Vector3d(0.0, 0.0, 1.0);
     return true;
   }
-  const double theta = ftheta_inverse(rho / f, target_.distortion_coeffs);
+  const double theta = ftheta_inverse(rho, target_.distortion_coeffs);
   const double s = std::sin(theta);
-  ray = Eigen::Vector3d(s * dx / rho, s * dy / rho, std::cos(theta));
+  ray = Eigen::Vector3d(s * x / rho, s * y / rho, std::cos(theta));
   return true;
 }
 
@@ -200,9 +198,10 @@ bool ImageUndistorter::project_source(const Eigen::Vector3d & ray, double & u, d
     v = fy * yd + cy;
     return true;
   }
-  const double f = source_.intrinsics[0];
-  const double cx = source_.intrinsics[1];
-  const double cy = source_.intrinsics[2];
+  const double fx = source_.intrinsics[0];
+  const double fy = source_.intrinsics[1];
+  const double cx = source_.intrinsics[2];
+  const double cy = source_.intrinsics[3];
   const double r = std::hypot(ray.x(), ray.y());
   if (r < 1e-9) {
     u = cx;
@@ -210,9 +209,9 @@ bool ImageUndistorter::project_source(const Eigen::Vector3d & ray, double & u, d
     return true;
   }
   const double theta = std::atan2(r, ray.z());
-  const double rho = f * ftheta_theta_d(theta, source_.distortion_coeffs);
-  u = cx + rho * ray.x() / r;
-  v = cy + rho * ray.y() / r;
+  const double theta_d = ftheta_theta_d(theta, source_.distortion_coeffs);
+  u = cx + fx * theta_d * ray.x() / r;
+  v = cy + fy * theta_d * ray.y() / r;
   return true;
 }
 

@@ -172,7 +172,12 @@ void CalibrationNode::save_result()
   param.width = image_size.width;
   param.intrinsics = calibrator_->get_intrinsics();
   param.distortion_coeffs = calibrator_->get_distortion_coeffs();
-  calib_param_manager_->add_camera_intrinsic_param(param);
+  if (!calib_param_manager_->add_camera_intrinsic_param(param)) {
+    RCLCPP_FATAL(
+      node_->get_logger(), "failed to add camera intrinsic param, %s",
+      calib_param_manager_->error_message().c_str());
+    return;
+  }
   if (calib_param_manager_->save(output_file_)) {
     RCLCPP_INFO(node_->get_logger(), "successed to save result: %s", output_file_.c_str());
   } else {

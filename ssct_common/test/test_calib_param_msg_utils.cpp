@@ -55,7 +55,7 @@ TEST(CalibParamMsgUtils, camera_round_trip)
   param.frame_id = "camera";
   param.height = 720;
   param.width = 1280;
-  param.type = "pinhole";
+  param.type = "pinhole_radtan";
   param.intrinsics = {1000.0, 1001.0, 640.0, 360.0};
   param.distortion_coeffs = {-0.1, 0.01, 0.0, 0.0, 0.0};
 
@@ -78,6 +78,7 @@ TEST(CalibParamMsgUtils, params_round_trip)
   camera.frame_id = "camera";
   camera.height = 480;
   camera.width = 640;
+  camera.type = "pinhole";
   camera.intrinsics = {500.0, 500.0, 320.0, 240.0};
   ASSERT_TRUE(params.add_camera_intrinsic_param(camera));
   ExtrinsicParam extrinsic;

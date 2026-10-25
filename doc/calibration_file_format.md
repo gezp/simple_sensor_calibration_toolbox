@@ -42,7 +42,7 @@ transforms:
 
 ## 相机内参说明
 
-相机内参包括以下三个量
+相机内参包括以下五个量
 
 * frame_id：传感器的frame id
 * height，width：标定相机的图片分辨率
@@ -50,29 +50,30 @@ transforms:
 * intrinsics：相机内参系数，为一个float数组
 * distortion_coeffs：畸变参数系数，为一个float数组
 
-由于不同的相机模型，其内参系数和畸变参数的组成及含义也不同，目前仅支持以下几种相机模型类型:
+由于不同的相机模型，其内参系数和畸变参数的组成及含义也不同。`type` 取以下规范值之一：
 
-* `pinhole_radtan `，`pinhole_equidistant `，`omni_radtan`
+| type | 别名 | 对应 OpenCV | intrinsics | distortion_coeffs |
+|---|---|---|---|---|
+| `pinhole` | 无 | pinhole，无畸变 | `[fx, fy, cx, cy]` | 空 |
+| `pinhole_radtan` | 无 | pinhole + radtan | `[fx, fy, cx, cy]` | `[k1, k2, p1, p2, k3]` |
+| `ftheta` | 无 | fisheye，`k1..k4 = 0` | `[fx, fy, cx, cy]` | 空 |
+| `ftheta_kb` | `fisheye` | `cv::fisheye` | `[fx, fy, cx, cy]` | `[k1, k2, k3, k4]` |
+| `mei` | 无 | `cv::omnidir`，无畸变 | `[xi, fx, fy, cx, cy]` | 空 |
+| `mei_radtan` | `omnidir` | `cv::omnidir` | `[xi, fx, fy, cx, cy]` | `[k1, k2, p1, p2]` |
 
-> 这里的相机模型可能与其它资料的定义不同，这里等价于某些资料中的相机模型+畸变模型。
+说明：
 
-`pinhole_radtan` (简写为`pinhole`)相机模型参数说明：
+* `pinhole_radtan` 的 5 个畸变系数与 OpenCV 标准 pinhole 一致，`k` 为径向畸变参数，`p` 为切向畸变参数。
+* `ftheta_kb` 的 4 个畸变系数为 Kannala-Brandt 多项式系数，对应 OpenCV fisheye。
+* `mei_radtan` 对应 OpenCV omnidir，固定 4 个畸变系数；OpenCV omnidir 没有第 5 个 `k3`。
+* 无畸变类型要求 `distortion_coeffs` 为空；有畸变类型必须严格匹配上表的系数个数。
+* `fisheye`、`omnidir` 只作为输入别名，保存和消息中统一写规范值 `ftheta_kb`、`mei_radtan`。
 
-* intrinsics: $[f_x, f_y, c_x, c_y]$
-* distortion_coeffs: $[k_1, k_2, p_1, p_2, k_3]$ ，其中k为径向畸变参数，p为切向畸变参数。
-* 参考：https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html
+参考：
 
-`pinhole_equidistant` (简写为`fisheye`)相机模型参数说明：
-
-* intrinsics: $[f_x, f_y, c_x, c_y]$
-* distortion_coeffs: $[\theta_1, \theta_2, \theta_3, \theta_4]$ 
-* 参考：https://docs.opencv.org/4.x/db/d58/group__calib3d__fisheye.html
-
-`omni_radtan` (简写为`omni`或`omnidir`)相机模型参数说明：
-
-* intrinsics: $[\xi, f_x, f_y, c_x, c_y]$
-* distortion_coeffs: $[k_1, k_2, p_1, p_2, k_3]$ ，其中k为径向畸变参数，p为切向畸变参数。
-* 参考：https://docs.opencv.org/4.x/dd/d12/tutorial_omnidir_calib_main.html
+* pinhole / radtan：https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html
+* fisheye：https://docs.opencv.org/4.x/db/d58/group__calib3d__fisheye.html
+* omnidir：https://docs.opencv.org/4.x/dd/d12/tutorial_omnidir_calib_main.html
 
 
 ## Imu内参说明
