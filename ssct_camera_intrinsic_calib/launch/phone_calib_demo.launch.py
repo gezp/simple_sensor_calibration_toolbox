@@ -24,7 +24,7 @@ def generate_launch_description():
         'ssct_camera_intrinsic_calib'
     )
     calibration_config = os.path.join(
-        pkg_ssct_camera_intrinsic_calib, 'config', 'calibration2.yaml'
+        pkg_ssct_camera_intrinsic_calib, 'config', 'phone_calibration.yaml'
     )
     calibration_result = os.path.join(
         os.environ['HOME'], 'calibration_data', 'result.yaml'

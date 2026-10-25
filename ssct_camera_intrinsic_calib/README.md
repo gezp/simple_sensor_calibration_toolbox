@@ -36,6 +36,21 @@ ros2 launch ssct_camera_intrinsic_calib demo.launch.py
 ros2 launch ssct_calib_client web_client.launch.py mode:=camera_intrinsic_calib
 ```
 
+## 手机相机标定demo
+
+可以使用 ROS2 Sensor app 将手机相机数据转发到 PC 上进行标定：
+
+* 手机与 PC 连接到同一个网络，并设置相同的 `ROS_DOMAIN_ID`。
+* 在手机 app 中开启相机数据转发，图像话题为 `/camera/image_raw/compressed`。
+* 在 PC 上运行：
+
+```bash
+ros2 launch ssct_camera_intrinsic_calib phone_calib_demo.launch.py
+```
+
+* 标定配置文件为`config/phone_calibration.yaml`，默认棋盘格为 11×7、方格边长 0.0326m，按实际标定板修改。
+* 同样需要另开终端启动 Web 客户端来操作标定流程。
+
 ## Reference
 
 * https://github.com/PJLab-ADG/SensorsCalibration/tree/master/camera_intrinsic/intrinsic_calib
