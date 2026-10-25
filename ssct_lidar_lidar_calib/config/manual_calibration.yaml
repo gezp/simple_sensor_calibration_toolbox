@@ -3,3 +3,4 @@ sync:
     source_time_offset: 0.0  # seconds, t_source_corrected = t_source + offset
     max_time_diff: 0.05      # seconds, reject pairs with larger difference
     timeout: 5.0             # seconds, capture timeout by wall clock
+

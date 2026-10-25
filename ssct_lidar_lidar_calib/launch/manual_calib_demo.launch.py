@@ -1,4 +1,4 @@
-# Copyright 2025 Gezp (https://github.com/gezp).
+# Copyright 2026 Gezp (https://github.com/gezp).
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ def launch_setup(context, *args, **kwargs):
         os.environ['HOME'], 'calibration_data', 'SensorsCalibration', 'lidar2lidar'
     )
     pkg_share = get_package_share_directory('ssct_lidar_lidar_calib')
-    calibrator_config = os.path.join(pkg_share, 'config', 'calibrator.yaml')
+    calibration_config = os.path.join(pkg_share, 'config', 'manual_calibration.yaml')
     initial_calibration = os.path.join(
         pkg_share, 'config', 'initial_calibration.yaml'
     )
@@ -71,7 +71,7 @@ def launch_setup(context, *args, **kwargs):
             {
                 'target_frame_id': TARGET_FRAME_ID,
                 'source_frame_id': source_frame_id,
-                'calibrator_config': calibrator_config,
+                'calibration_config': calibration_config,
                 'initial_calibration_file': initial_calibration,
                 'output_calibration_file': output_calibration,
             }

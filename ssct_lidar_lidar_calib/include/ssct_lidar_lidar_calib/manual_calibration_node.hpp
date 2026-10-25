@@ -1,4 +1,4 @@
-// Copyright 2025 Gezp (https://github.com/gezp).
+// Copyright 2026 Gezp (https://github.com/gezp).
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <thread>
 #include <memory>
@@ -31,7 +32,7 @@
 namespace ssct_lidar_lidar_calib
 {
 
-class CalibrationNode
+class ManualCalibrationNode
 {
   using CloudData = ssct_common::CloudSubscriber<pcl::PointXYZI>::MsgData;
 
@@ -49,8 +50,8 @@ class CalibrationNode
   };
 
 public:
-  explicit CalibrationNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
-  ~CalibrationNode();
+  explicit ManualCalibrationNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+  ~ManualCalibrationNode();
   rclcpp::node_interfaces::NodeBaseInterface::SharedPtr get_node_base_interface()
   {
     return node_->get_node_base_interface();
@@ -92,7 +93,7 @@ private:
   std::chrono::steady_clock::time_point capture_start_time_;
   // calibration flow thread
   std::unique_ptr<std::thread> run_thread_;
-  bool exit_{false};
+  std::atomic<bool> exit_{false};
   // sensor data
   size_t max_pointcloud_buffer_size_{20};
   std::deque<CloudData> target_buffer_;

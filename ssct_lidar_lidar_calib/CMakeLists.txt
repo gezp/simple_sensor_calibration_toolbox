@@ -13,6 +13,7 @@ find_package(ament_cmake REQUIRED)
 find_package(ssct_common REQUIRED)
 find_package(ssct_interfaces REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(pcl_ros REQUIRED)
 # find_package(backward_ros REQUIRED)
 
 include_directories(include)
@@ -21,10 +22,13 @@ include_directories(include)
 set(dependencies
   ssct_common
   ssct_interfaces
+  pcl_ros
 )
 
 add_library(${PROJECT_NAME} SHARED
   src/manual_calibration_node.cpp
+  src/simple_calibrator.cpp
+  src/calibration_node.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME} ${dependencies})
@@ -37,6 +41,12 @@ add_executable(manual_calibration_node
   src/manual_calibration_main.cpp)
 
 target_link_libraries(manual_calibration_node ${PROJECT_NAME})
+
+# auto calibration node
+add_executable(calibration_node
+  src/calibration_main.cpp)
+
+target_link_libraries(calibration_node ${PROJECT_NAME})
 
 
 # install include directories
@@ -56,6 +66,7 @@ install(TARGETS ${PROJECT_NAME}
 # install executables
 install(TARGETS
     manual_calibration_node
+    calibration_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -63,6 +74,8 @@ install(TARGETS
 install(DIRECTORY launch config
   DESTINATION share/${PROJECT_NAME}
 )
+
+ament_export_dependencies(ssct_common ssct_interfaces pcl_ros yaml-cpp)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

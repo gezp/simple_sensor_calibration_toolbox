@@ -1,0 +1,17 @@
+# target and source pointcloud pairing, both use message header stamps.
+sync:
+    source_time_offset: 0.0  # seconds, t_source_corrected = t_source + offset
+    max_time_diff: 0.05      # seconds, reject pairs with larger difference
+    timeout: 5.0             # seconds, capture timeout by wall clock
+
+# lidar2lidar calibration
+simple_calibrator:
+    near_range: 1.0                          # meters, remove source points close to origin before ground extraction
+    ground_distance_threshold: 0.2           # meters, ground RANSAC inlier distance
+    ground_min_points: 100                   # minimum ground/non-ground points
+    yaw_search_range: 10.0                   # degrees, initial yaw search range
+    yaw_step: 5.0                            # degrees, initial yaw search step
+    yaw_iterations: 5                        # coarse-to-fine yaw search rounds
+    normal_k_search: 40                      # neighbors for normal estimation
+    icp_max_iterations: 10
+    icp_max_correspondence_distance: 0.3     # meters
