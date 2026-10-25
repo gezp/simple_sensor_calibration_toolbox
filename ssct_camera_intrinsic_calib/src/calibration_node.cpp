@@ -24,20 +24,20 @@ namespace ssct_camera_intrinsic_calib
 CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
 {
   node_ = std::make_shared<rclcpp::Node>("ssct_camera_intrinsic_calib_node", options);
-  std::string calibrator_config;
+  std::string calibration_config;
   node_->declare_parameter("frame_id", frame_id_);
   node_->declare_parameter("output_file", output_file_);
-  node_->declare_parameter("calibrator_config", calibrator_config);
+  node_->declare_parameter("calibration_config", calibration_config);
   node_->declare_parameter("enable_compressed_image", enable_compressed_image_);
   node_->declare_parameter("autostart", autostart_);
   node_->get_parameter("frame_id", frame_id_);
   node_->get_parameter("output_file", output_file_);
-  node_->get_parameter("calibrator_config", calibrator_config);
+  node_->get_parameter("calibration_config", calibration_config);
   node_->get_parameter("enable_compressed_image", enable_compressed_image_);
   node_->get_parameter("autostart", autostart_);
-  RCLCPP_INFO(node_->get_logger(), "calibrator_config: [%s]", calibrator_config.c_str());
-  if (calibrator_config == "" || (!std::filesystem::exists(calibrator_config))) {
-    RCLCPP_FATAL(node_->get_logger(), "calibrator_config is invalid");
+  RCLCPP_INFO(node_->get_logger(), "calibration_config: [%s]", calibration_config.c_str());
+  if (calibration_config == "" || (!std::filesystem::exists(calibration_config))) {
+    RCLCPP_FATAL(node_->get_logger(), "calibration_config is invalid");
     return;
   }
   // pub&sub
@@ -61,21 +61,21 @@ CalibrationNode::CalibrationNode(const rclcpp::NodeOptions & options)
     std::make_shared<ssct_common::ImagePublisher>(node_, debug_topic, 100, frame_id_);
 
   // calibrator
-  YAML::Node config_node = YAML::LoadFile(calibrator_config);
+  YAML::Node config_node = YAML::LoadFile(calibration_config);
   try {
     std::string calibrator_type = config_node["calibrator_type"].as<std::string>();
-    YAML::Node calibrator_config_node = config_node[calibrator_type];
-    if (!calibrator_config_node) {
+    YAML::Node calibration_config_node = config_node[calibrator_type];
+    if (!calibration_config_node) {
       RCLCPP_FATAL(
         node_->get_logger(), "missing config for calibrator_type: %s", calibrator_type.c_str());
       return;
     }
     if (calibrator_type == "opencv_calibrator") {
-      calibrator_ = std::make_shared<OpenCVCalibrator>(calibrator_config_node);
+      calibrator_ = std::make_shared<OpenCVCalibrator>(calibration_config_node);
     } else if (calibrator_type == "opencv_fisheye_calibrator") {
-      calibrator_ = std::make_shared<OpenCVFisheyeCalibrator>(calibrator_config_node);
+      calibrator_ = std::make_shared<OpenCVFisheyeCalibrator>(calibration_config_node);
     } else if (calibrator_type == "opencv_omnidir_calibrator") {
-      calibrator_ = std::make_shared<OpenCVOmnidirCalibrator>(calibrator_config_node);
+      calibrator_ = std::make_shared<OpenCVOmnidirCalibrator>(calibration_config_node);
     } else {
       RCLCPP_FATAL(
         node_->get_logger(), "unsupported calibrator_type: %s", calibrator_type.c_str());

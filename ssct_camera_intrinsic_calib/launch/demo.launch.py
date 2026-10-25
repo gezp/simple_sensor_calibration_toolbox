@@ -27,8 +27,8 @@ def generate_launch_description():
     pkg_ssct_camera_intrinsic_calib = get_package_share_directory(
         'ssct_camera_intrinsic_calib'
     )
-    calibrator_config = os.path.join(
-        pkg_ssct_camera_intrinsic_calib, 'config', 'calibrator.yaml'
+    calibration_config = os.path.join(
+        pkg_ssct_camera_intrinsic_calib, 'config', 'calibration.yaml'
     )
     calibration_result = os.path.join(
         os.environ['HOME'], 'calibration_data', 'result.yaml'
@@ -53,7 +53,7 @@ def generate_launch_description():
         parameters=[
             {
                 'frame_id': 'center_camera',
-                'calibrator_config': calibrator_config,
+                'calibration_config': calibration_config,
                 'output_file': calibration_result,
             }
         ],
