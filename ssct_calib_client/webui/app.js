@@ -20,6 +20,7 @@ const state = {
   connected: false,
   panel: null,
   pendingImage: null,
+  pendingImu: null,
   pendingClouds: new Map(),
   pendingParams: null,
 };
@@ -69,6 +70,7 @@ function resetSelection() {
   state.panel = null;
   state.selected = null;
   state.pendingImage = null;
+  state.pendingImu = null;
   state.pendingClouds.clear();
   state.pendingParams = null;
   panelHost.replaceChildren();
@@ -149,6 +151,10 @@ function onStatus(status) {
     state.panel?.image(state.pendingImage);
     state.pendingImage = null;
   }
+  if (state.pendingImu) {
+    state.panel?.imu?.(state.pendingImu);
+    state.pendingImu = null;
+  }
   for (const cloud of state.pendingClouds.values()) {
     state.panel?.cloud(cloud);
   }
@@ -226,6 +232,11 @@ function onJson(message) {
     renderTopics();
   } else if (message.type === 'status') {
     onStatus(message);
+  } else if (message.type === 'imu') {
+    if (!state.connected || !state.selected) return;
+    if (message.topic && message.topic !== state.selected) return;
+    if (state.panel) state.panel.imu?.(message);
+    else state.pendingImu = message;
   } else if (message.type === 'params') {
     if (state.panel) state.panel.params?.(message);
     else state.pendingParams = message;

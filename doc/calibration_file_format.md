@@ -20,11 +20,11 @@ imus:
     imu1:
         frame_id: imu1
         accel_matrix: [1, 0, 0, 0, 1, 0, 0, 0, 1]
-        accel_offset: [0, 0, 0]
+        accel_bias: [0, 0, 0]
         accel_noise_density: [1.86e-03, 1.86e-03, 1.86e-03]
         accel_random_walk: [4.33e-04, 4.33e-04, 4.33e-04]
         gyro_matrix: [1, 0, 0, 0, 1, 0, 0, 0, 1]
-        gyro_offset: [0, 0, 0]
+        gyro_bias: [0, 0, 0]
         gyro_noise_density: [1.87e-04, 1.87e-04, 1.87e-04]
         gyro_random_walk: [2.66e-05, 2.66e-05, 2.66e-05]
 transforms:
@@ -81,20 +81,22 @@ transforms:
 IMU内参包括加速度计accel和陀螺仪gyro两组数据
 
 * frame_id：传感器的frame id
-* accel_matrix，accel_offset：速度计accel的仿射变换模型参数，修正测量值。
-* accel_noise_density，accel_random_walk：速度计accel的白噪声以及零偏不稳定（随机游走）噪声。
-* gyro_matrix，gyro_offset：陀螺仪gyro的仿射变换模型参数，修正测量值。
-* gyro_noise_density，gyro_random_walk：陀螺仪gyro的白噪声以及零偏不稳定（随机游走）噪声。
+* accel_matrix，accel_bias：加速度计accel的仿射变换模型参数，修正测量值。
+* accel_noise_density：加速度计白噪声密度，单位 `m/s²/√Hz`。连续时间白噪声的幅度谱密度；采样周期为 `dt` 时，单样本标准差为 `accel_noise_density / √dt`。
+* accel_random_walk：加速度计零偏随机游走，单位 `m/s³/√Hz`。零偏不确定度随时间增长，`t` 秒后标准差为 `accel_random_walk * √t`；单步增量标准差为 `accel_random_walk * √dt`。
+* gyro_matrix，gyro_bias：陀螺仪gyro的仿射变换模型参数，修正测量值。
+* gyro_noise_density：陀螺仪白噪声密度，单位 `rad/s/√Hz`。采样周期为 `dt` 时，单样本标准差为 `gyro_noise_density / √dt`。
+* gyro_random_walk：陀螺仪零偏随机游走，单位 `rad/s²/√Hz`。`t` 秒后零偏标准差为 `gyro_random_walk * √t`；单步增量标准差为 `gyro_random_walk * √dt`。
 
 速度计accel和陀螺仪gyro采用仿射变换建立确定性误差模型，修正scale,misalignment等误差，测量值修正公式如下：
 $$
-\hat x_{accel} = A_{accel}x_{accel} + b_{accel} \\
-\hat x_{gyro} = A_{gyro}x_{gyro} + b_{gyro} \\
+\hat x_{accel} = M_{accel}(x_{accel} - b_{accel}) \\
+\hat x_{gyro} = M_{gyro}(x_{gyro} - b_{gyro}) \\
 $$
 
-* 其中$x$是原始测量值，$\hat x$是标定修正后的值，A对应matrix参数，b对应offset参数
+* 其中$x$是原始测量值，$\hat x$是标定修正后的值，矩阵对应matrix参数，b对应bias参数，bias与原始测量值同单位
 
-random_walk和noise_density是随机误差（不确定性误差）模型参数，一般使用allan方差分析得到
+random_walk和noise_density是随机误差（不确定性误差）模型参数，一般使用Allan方差分析得到
 * 参考：https://github.com/ethz-asl/kalibr/wiki/IMU-Noise-Model
 
 

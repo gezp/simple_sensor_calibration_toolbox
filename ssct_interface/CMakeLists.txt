@@ -18,6 +18,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/CalibrationStatus.msg"
   "msg/CalibrationCommand.msg"
   "msg/CameraIntrinsicParam.msg"
+  "msg/ImuIntrinsicParam.msg"
   "msg/ExtrinsicParam.msg"
   "msg/CalibrationParams.msg"
 DEPENDENCIES

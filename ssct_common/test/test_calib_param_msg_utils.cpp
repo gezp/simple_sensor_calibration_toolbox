@@ -71,6 +71,41 @@ TEST(CalibParamMsgUtils, camera_round_trip)
   }
 }
 
+TEST(CalibParamMsgUtils, imu_round_trip)
+{
+  ImuIntrinsicParam param;
+  param.frame_id = "imu";
+  param.accel_matrix = Eigen::Matrix3d::Identity();
+  param.accel_matrix(0, 1) = 0.01;
+  param.accel_bias << 0.1, 0.2, 0.3;
+  param.accel_noise_density << 0.001, 0.002, 0.003;
+  param.accel_random_walk << 0.0001, 0.0002, 0.0003;
+  param.gyro_matrix = Eigen::Matrix3d::Identity();
+  param.gyro_matrix(1, 2) = -0.02;
+  param.gyro_bias << -0.1, -0.2, -0.3;
+  param.gyro_noise_density << 0.004, 0.005, 0.006;
+  param.gyro_random_walk << 0.0004, 0.0005, 0.0006;
+
+  ImuIntrinsicParam result;
+  ASSERT_TRUE(from_ros_msg(to_ros_msg(param), result));
+  EXPECT_EQ(result.frame_id, param.frame_id);
+  EXPECT_LT((result.accel_matrix - param.accel_matrix).norm(), 1e-12);
+  EXPECT_LT((result.accel_bias - param.accel_bias).norm(), 1e-12);
+  EXPECT_LT((result.accel_noise_density - param.accel_noise_density).norm(), 1e-12);
+  EXPECT_LT((result.accel_random_walk - param.accel_random_walk).norm(), 1e-12);
+  EXPECT_LT((result.gyro_matrix - param.gyro_matrix).norm(), 1e-12);
+  EXPECT_LT((result.gyro_bias - param.gyro_bias).norm(), 1e-12);
+  EXPECT_LT((result.gyro_noise_density - param.gyro_noise_density).norm(), 1e-12);
+  EXPECT_LT((result.gyro_random_walk - param.gyro_random_walk).norm(), 1e-12);
+}
+
+TEST(CalibParamMsgUtils, reject_invalid_imu)
+{
+  ssct_interfaces::msg::ImuIntrinsicParam msg;
+  ImuIntrinsicParam param;
+  EXPECT_FALSE(from_ros_msg(msg, param));
+}
+
 TEST(CalibParamMsgUtils, params_round_trip)
 {
   CalibParamManager params;
@@ -81,6 +116,17 @@ TEST(CalibParamMsgUtils, params_round_trip)
   camera.type = "pinhole";
   camera.intrinsics = {500.0, 500.0, 320.0, 240.0};
   ASSERT_TRUE(params.add_camera_intrinsic_param(camera));
+  ImuIntrinsicParam imu;
+  imu.frame_id = "imu";
+  imu.accel_matrix = Eigen::Matrix3d::Identity();
+  imu.accel_bias.setZero();
+  imu.accel_noise_density.setZero();
+  imu.accel_random_walk.setZero();
+  imu.gyro_matrix = Eigen::Matrix3d::Identity();
+  imu.gyro_bias << 0.1, 0.2, 0.3;
+  imu.gyro_noise_density.setZero();
+  imu.gyro_random_walk.setZero();
+  ASSERT_TRUE(params.add_imu_intrinsic_param(imu));
   ExtrinsicParam extrinsic;
   extrinsic.frame_id = "camera";
   extrinsic.child_frame_id = "lidar";
@@ -97,6 +143,9 @@ TEST(CalibParamMsgUtils, params_round_trip)
   CameraIntrinsicParam result_camera;
   ASSERT_TRUE(result.get_camera_intrinsic_param("camera", result_camera));
   EXPECT_EQ(result_camera.width, camera.width);
+  ImuIntrinsicParam result_imu;
+  ASSERT_TRUE(result.get_imu_intrinsic_param("imu", result_imu));
+  EXPECT_LT((result_imu.gyro_bias - imu.gyro_bias).norm(), 1e-12);
   ExtrinsicParam result_extrinsic;
   ASSERT_TRUE(result.get_extrinsic_param("camera", "lidar", result_extrinsic));
   EXPECT_NEAR(result_extrinsic.transform(0, 3), 0.5, 1e-9);

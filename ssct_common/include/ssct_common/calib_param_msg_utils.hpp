@@ -19,10 +19,12 @@
 #include "rclcpp/time.hpp"
 #include "ssct_common/calib_param/camera_intrinsic_param.hpp"
 #include "ssct_common/calib_param/extrinsic_param.hpp"
+#include "ssct_common/calib_param/imu_intrinsic_param.hpp"
 #include "ssct_common/calib_param_manager.hpp"
 #include "ssct_interfaces/msg/calibration_params.hpp"
 #include "ssct_interfaces/msg/camera_intrinsic_param.hpp"
 #include "ssct_interfaces/msg/extrinsic_param.hpp"
+#include "ssct_interfaces/msg/imu_intrinsic_param.hpp"
 
 namespace ssct_common
 {
@@ -34,6 +36,11 @@ ssct_interfaces::msg::CameraIntrinsicParam to_ros_msg(const CameraIntrinsicParam
 bool from_ros_msg(
   const ssct_interfaces::msg::CameraIntrinsicParam & msg,
   CameraIntrinsicParam & param);
+
+ssct_interfaces::msg::ImuIntrinsicParam to_ros_msg(const ImuIntrinsicParam & param);
+bool from_ros_msg(
+  const ssct_interfaces::msg::ImuIntrinsicParam & msg,
+  ImuIntrinsicParam & param);
 
 ssct_interfaces::msg::CalibrationParams to_ros_msg(
   const CalibParamManager & params, const rclcpp::Time & stamp);

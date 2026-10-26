@@ -251,6 +251,10 @@ output {
   width: 100%;
 }
 
+.views.stacked {
+  grid-template-columns: 1fr;
+}
+
 .view {
   display: grid;
   gap: 6px;
@@ -290,6 +294,18 @@ output {
   color: var(--muted);
   font-size: 13px;
   padding: 40px;
+}
+
+.viewport.imu-viewport {
+  aspect-ratio: auto;
+  max-height: none;
+  height: 130px;
+}
+
+canvas.imu {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 canvas.cloud {

@@ -43,6 +43,8 @@ colcon build --symlink-install
 - [x] 实现针孔相机内参标定: `ssct_camera_intrinsic_calib`
 - [x] 实现鱼眼相机内参标定: `ssct_camera_intrinsic_calib`
 - [x] 实现全景相机内参标定: `ssct_camera_intrinsic_calib`
+- [x] 实现IMU内参（Allan方差）标定: `ssct_imu_intrinsic_calib`
+- [x] 实现IMU内参（IMU-TK多位置法）标定: `ssct_imu_intrinsic_calib`
 
 sensor2sensor外参标定
 

@@ -35,8 +35,14 @@ from aiohttp import WSMsgType, web
 from ament_index_python.packages import get_package_share_directory
 from cv_bridge import CvBridge
 from rclpy.node import Node
-from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
-from sensor_msgs.msg import Image, PointCloud2
+from rclpy.qos import (
+    DurabilityPolicy,
+    HistoryPolicy,
+    QoSProfile,
+    ReliabilityPolicy,
+    qos_profile_sensor_data,
+)
+from sensor_msgs.msg import Image, Imu, PointCloud2
 from sensor_msgs_py import point_cloud2
 from ssct_interfaces.msg import (
     CalibrationCommand,
@@ -47,6 +53,7 @@ from ssct_interfaces.msg import (
 
 STATUS_TYPE = 'ssct_interfaces/msg/CalibrationStatus'
 IMAGE_TYPE = 'sensor_msgs/msg/Image'
+IMU_TYPE = 'sensor_msgs/msg/Imu'
 CLOUD_TYPE = 'sensor_msgs/msg/PointCloud2'
 
 COMMANDS = {
@@ -83,6 +90,7 @@ def status_dict(msg):
 MODES = [
     {'id': 'generic_calib', 'url': '/static/modes/generic_calib/index.js'},
     {'id': 'camera_intrinsic_calib', 'url': '/static/modes/camera_intrinsic_calib/index.js'},
+    {'id': 'imu_intrinsic_calib', 'url': '/static/modes/imu_intrinsic_calib/index.js'},
     {'id': 'lidar_cam_manual_calib', 'url': '/static/modes/lidar_cam_manual_calib/index.js'},
     {'id': 'lidar_lidar_manual_calib', 'url': '/static/modes/lidar_lidar_manual_calib/index.js'},
 ]
@@ -242,6 +250,10 @@ class Session:
         self.meta_key = None
         self.image_topic = None
         self.image_sub = None
+        self.imu_topic = None
+        self.imu_sub = None
+        self.imu_samples = []
+        self.imu_lock = threading.Lock()
         self.command_topic = None
         self.cmd_pub = None
         self.params_sub = None
@@ -277,6 +289,17 @@ class Session:
         if generation == self.generation and topic in self.cloud_subs:
             self.cloud_msgs[topic] = msg
 
+    def on_imu(self, generation, msg):
+        if generation != self.generation:
+            return
+        sample = [
+            msg.angular_velocity.x, msg.angular_velocity.y, msg.angular_velocity.z,
+            msg.linear_acceleration.x, msg.linear_acceleration.y,
+            msg.linear_acceleration.z,
+        ]
+        with self.imu_lock:
+            self.imu_samples.append(sample)
+
     def on_params(self, msg):
         self.send_ctrl(params_dict(msg))
         self.event.set()
@@ -292,6 +315,8 @@ class Session:
         self.generation += 1
         if self.image_sub is not None:
             self.bridge.node.destroy_subscription(self.image_sub)
+        if self.imu_sub is not None:
+            self.bridge.node.destroy_subscription(self.imu_sub)
         for sub in self.cloud_subs.values():
             self.bridge.node.destroy_subscription(sub)
         if self.cmd_pub is not None:
@@ -301,13 +326,17 @@ class Session:
         if self.result_pub is not None:
             self.bridge.node.destroy_publisher(self.result_pub)
         self.image_sub = None
+        self.imu_sub = None
         self.cloud_subs = {}
         self.cmd_pub = None
         self.params_sub = None
         self.result_pub = None
         self.status_msg = None
         self.image_topic = None
+        self.imu_topic = None
         self.command_topic = None
+        with self.imu_lock:
+            self.imu_samples = []
         self.cloud_msgs = {}
         self.meta_key = None
         self.image = None
@@ -333,6 +362,23 @@ class Session:
         if self.image_sub is None and topic and IMAGE_TYPE in types.get(topic, []):
             self.image_sub = self.bridge.node.create_subscription(
                 Image, topic, lambda image, g=generation: self.on_image(g, image), 10
+            )
+        imu_topic = msg.sensor_topic or None
+        if imu_topic and IMU_TYPE not in types.get(imu_topic, []):
+            imu_topic = None
+        if imu_topic != self.imu_topic:
+            if self.imu_sub is not None:
+                self.bridge.node.destroy_subscription(self.imu_sub)
+                self.imu_sub = None
+            self.imu_topic = imu_topic
+            with self.imu_lock:
+                self.imu_samples = []
+        if self.imu_sub is None and imu_topic:
+            self.imu_sub = self.bridge.node.create_subscription(
+                Imu,
+                imu_topic,
+                lambda imu, g=generation: self.on_imu(g, imu),
+                qos_profile_sensor_data,
             )
         if msg.command_topic != self.command_topic:
             if self.cmd_pub is not None:
@@ -370,6 +416,7 @@ class Session:
         key = (
             self.image_topic,
             self.image_sub is not None,
+            self.imu_sub is not None,
             self.command_topic,
             tuple(sorted(self.cloud_subs)),
         )
@@ -378,6 +425,7 @@ class Session:
             self.send_ctrl({
                 'type': 'meta',
                 'image': self.image_sub is not None,
+                'imu': self.imu_sub is not None,
                 'clouds': list(self.cloud_subs),
             })
 
@@ -429,6 +477,19 @@ class Session:
                     {'stream': 'image', 'topic': self.selected}
                 ).encode()
                 await self.ws.send_bytes(struct.pack('<I', len(header)) + header + data)
+
+            with self.imu_lock:
+                samples = self.imu_samples
+                self.imu_samples = []
+            if samples:
+                if len(samples) > 400:
+                    stride = (len(samples) + 399) // 400
+                    samples = samples[::stride]
+                await self.ws.send_str(json.dumps({
+                    'type': 'imu',
+                    'topic': self.selected,
+                    'samples': samples,
+                }))
 
     async def handle(self, request):
         kind = request.get('type')

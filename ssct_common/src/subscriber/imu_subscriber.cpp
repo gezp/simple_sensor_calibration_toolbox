@@ -32,8 +32,8 @@ ImuSubscriber::ImuSubscriber(rclcpp::Node::SharedPtr node, std::string topic_nam
       buffer_.push_back(data);
       buffer_mutex_.unlock();
     };
-  subscriber_ =
-    node_->create_subscription<sensor_msgs::msg::Imu>(topic_name, buff_size, msg_callback);
+  subscriber_ = node_->create_subscription<sensor_msgs::msg::Imu>(
+    topic_name, rclcpp::SensorDataQoS().keep_last(buff_size), msg_callback);
 }
 
 const char * ImuSubscriber::get_topic_name()
