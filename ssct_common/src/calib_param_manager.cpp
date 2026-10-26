@@ -238,6 +238,7 @@ bool CalibParamManager::load(const std::string & file)
 {
   camera_intrinsic_params_.clear();
   extrinsic_params_.clear();
+  imu_intrinsic_params_.clear();
   YAML::Node config = YAML::LoadFile(file);
   auto cameras = config["cameras"];
   if (cameras.IsDefined() && cameras.IsMap()) {
