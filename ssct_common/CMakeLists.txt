@@ -50,6 +50,9 @@ add_library(${PROJECT_NAME} SHARED
   src/dummy_sensor/dummy_lidar_node.cpp
   src/dummy_sensor/dummy_imu_node.cpp
   # utils
+  src/calib_param/camera_intrinsic_param.cpp
+  src/calib_param/extrinsic_param.cpp
+  src/calib_param/imu_intrinsic_param.cpp
   src/calib_param_manager.cpp
   src/calib_param_msg_utils.cpp
   src/msg_utils.cpp

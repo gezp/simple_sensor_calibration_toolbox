@@ -2,6 +2,7 @@
 // metadata, debug image, status/progress, info, then commands.
 
 import { createCloudView } from './pointcloud.js';
+import { createImuView } from './imu_plot.js';
 
 const STATE_TEXT = [
   'unknown',
@@ -26,7 +27,7 @@ const BASICS = [
   ['save', 'save result', ''],
 ];
 
-export function createPanel(root, ctx, { image = true, cloud = false } = {}) {
+export function createPanel(root, ctx, { image = true, cloud = false, imu = false } = {}) {
   root.innerHTML = `
     <section class="panel">
       <section class="meta">
@@ -43,6 +44,12 @@ export function createPanel(root, ctx, { image = true, cloud = false } = {}) {
       </section>
 
       <div class="views">
+        <figure class="view" data-imuview hidden>
+          <figcaption class="field-label">imu data:</figcaption>
+          <div class="viewport imu-viewport">
+            <canvas class="imu" data-imucanvas></canvas>
+          </div>
+        </figure>
         <figure class="view" data-imageview>
           <figcaption class="field-label">debug image:</figcaption>
           <div class="viewport">
@@ -89,7 +96,9 @@ export function createPanel(root, ctx, { image = true, cloud = false } = {}) {
 
   if (!image) query('[data-imageview]')?.remove();
   if (!cloud) query('[data-cloudview]')?.remove();
+  if (!imu) query('[data-imuview]')?.remove();
   if (!query('.view')) query('.views')?.remove();
+  if (imu) query('.views')?.classList.add('stacked');
 
   for (const [command, label, kind] of BASICS) {
     const button = document.createElement('button');
@@ -105,6 +114,12 @@ export function createPanel(root, ctx, { image = true, cloud = false } = {}) {
       ctx.send({ command });
     });
     query('[data-basic]').append(button);
+  }
+
+  let imuView = null;
+  if (imu) {
+    query('[data-imuview]').hidden = false;
+    imuView = createImuView(query('[data-imucanvas]'));
   }
 
   let cloudView = null;
@@ -133,6 +148,9 @@ export function createPanel(root, ctx, { image = true, cloud = false } = {}) {
       emptyEl.hidden = true;
       if (imageUrl) URL.revokeObjectURL(imageUrl);
       imageUrl = next;
+    },
+    imu(data) {
+      imuView?.push(data);
     },
     cloud(data) {
       cloudView?.setPoints(data);

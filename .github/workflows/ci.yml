@@ -31,6 +31,9 @@ jobs:
       - name: Test ssct_camera_intrinsic_calib
         run: |
           /usr/bin/bash .github/workflows/colcon_test.sh ssct_camera_intrinsic_calib
+      - name: Test ssct_imu_intrinsic_calib
+        run: |
+          /usr/bin/bash .github/workflows/colcon_test.sh ssct_imu_intrinsic_calib
       - name: Test ssct_lidar_cam_calib
         run: |
           /usr/bin/bash .github/workflows/colcon_test.sh ssct_lidar_cam_calib

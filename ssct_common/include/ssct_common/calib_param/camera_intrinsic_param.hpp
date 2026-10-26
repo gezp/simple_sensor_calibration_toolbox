@@ -33,6 +33,8 @@ struct CameraIntrinsicParam
   std::vector<double> distortion_coeffs;
 };
 
+std::string to_string(const CameraIntrinsicParam & param);
+
 // Canonical models:
 //   pinhole          [fx, fy, cx, cy]                 no distortion
 //   pinhole_radtan   [fx, fy, cx, cy]                 [k1, k2, p1, p2, k3]

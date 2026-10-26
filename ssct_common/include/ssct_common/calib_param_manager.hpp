@@ -41,6 +41,7 @@ public:
   // for imu intrinsic params
   bool add_imu_intrinsic_param(const ImuIntrinsicParam & param);
   bool get_imu_intrinsic_param(const std::string & frame_id, ImuIntrinsicParam & param);
+  const std::map<std::string, ImuIntrinsicParam> & imu_intrinsic_params() const;
   void remove_imu_intrinsic_param(const std::string & frame_id);
   // for extrinsic params
   bool add_extrinsic_param(const ExtrinsicParam & param);

@@ -1,0 +1,15 @@
+# Calibrator implementation: allan_calibrator or imu_tk_calibrator.
+calibrator_type: imu_tk_calibrator
+
+# IMU-TK multi-position intrinsic calibration.
+# Move through at least min_intervals distinct orientations. The result is
+# computed automatically, save to write it.
+imu_tk_calibrator:
+  # Local gravity magnitude used as the accelerometer reference.
+  gravity_magnitude: 9.81744
+  # Sliding window (seconds) used to detect static intervals.
+  static_window: 0.5
+  # Samples extracted from each static interval.
+  interval_samples: 100
+  # Minimum number of static poses.
+  min_intervals: 12

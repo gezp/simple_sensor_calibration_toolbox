@@ -1,0 +1,14 @@
+# Allan variance calibrator.
+calibrator_type: allan_calibrator
+
+# Keep the IMU completely stationary during the whole collection.
+allan_calibrator:
+  # Required stationary duration (seconds); stop when it is reached.
+  duration: 1800.0
+  # Recompute and redraw the Allan curve every this many seconds.
+  # Intermediate results are for display only and cannot be saved.
+  plot_interval: 300.0
+  # Number of log-spaced cluster sizes in the Allan curve.
+  num_clusters: 40
+  # Minimum valid samples required to compute the curve.
+  min_samples: 1000

@@ -114,6 +114,11 @@ bool CalibParamManager::get_imu_intrinsic_param(
   return true;
 }
 
+const std::map<std::string, ImuIntrinsicParam> & CalibParamManager::imu_intrinsic_params() const
+{
+  return imu_intrinsic_params_;
+}
+
 void CalibParamManager::remove_imu_intrinsic_param(const std::string & frame_id)
 {
   auto it = imu_intrinsic_params_.find(frame_id);
@@ -196,12 +201,14 @@ bool CalibParamManager::save(const std::string & file)
     for (auto & [key, param] : imu_intrinsic_params_) {
       ofs << "    imu" << cnt << ":" << std::endl;
       ofs << "        frame_id: " << param.frame_id << std::endl;
-      ofs << "        accel_matrix: " << to_string(param.accel_matrix) << std::endl;
-      ofs << "        accel_offset: " << to_string(param.accel_offset) << std::endl;
+      ofs << "        accel_matrix: " << to_string(param.accel_matrix) <<
+        std::endl;
+      ofs << "        accel_bias: " << to_string(param.accel_bias) << std::endl;
       ofs << "        accel_noise_density: " << to_string(param.accel_noise_density) << std::endl;
       ofs << "        accel_random_walk: " << to_string(param.accel_random_walk) << std::endl;
-      ofs << "        gyro_matrix: " << to_string(param.gyro_matrix) << std::endl;
-      ofs << "        gyro_offset: " << to_string(param.gyro_offset) << std::endl;
+      ofs << "        gyro_matrix: " << to_string(param.gyro_matrix) <<
+        std::endl;
+      ofs << "        gyro_bias: " << to_string(param.gyro_bias) << std::endl;
       ofs << "        gyro_noise_density: " << to_string(param.gyro_noise_density) << std::endl;
       ofs << "        gyro_random_walk: " << to_string(param.gyro_random_walk) << std::endl;
       cnt++;
@@ -231,6 +238,7 @@ bool CalibParamManager::load(const std::string & file)
 {
   camera_intrinsic_params_.clear();
   extrinsic_params_.clear();
+  imu_intrinsic_params_.clear();
   YAML::Node config = YAML::LoadFile(file);
   auto cameras = config["cameras"];
   if (cameras.IsDefined() && cameras.IsMap()) {
@@ -267,14 +275,16 @@ bool CalibParamManager::load(const std::string & file)
         YAML::Node camera = it->second;
         ImuIntrinsicParam param;
         param.frame_id = camera["frame_id"].as<std::string>();
-        param.accel_matrix = to_Matrix3d(camera["accel_matrix"].as<std::vector<double>>());
-        param.accel_offset = to_Vector3d(camera["accel_offset"].as<std::vector<double>>());
+        param.accel_matrix =
+          to_Matrix3d(camera["accel_matrix"].as<std::vector<double>>());
+        param.accel_bias = to_Vector3d(camera["accel_bias"].as<std::vector<double>>());
         param.accel_noise_density =
           to_Vector3d(camera["accel_noise_density"].as<std::vector<double>>());
         param.accel_random_walk =
           to_Vector3d(camera["accel_random_walk"].as<std::vector<double>>());
-        param.gyro_matrix = to_Matrix3d(camera["gyro_matrix"].as<std::vector<double>>());
-        param.gyro_offset = to_Vector3d(camera["gyro_offset"].as<std::vector<double>>());
+        param.gyro_matrix =
+          to_Matrix3d(camera["gyro_matrix"].as<std::vector<double>>());
+        param.gyro_bias = to_Vector3d(camera["gyro_bias"].as<std::vector<double>>());
         param.gyro_noise_density =
           to_Vector3d(camera["gyro_noise_density"].as<std::vector<double>>());
         param.gyro_random_walk = to_Vector3d(camera["gyro_random_walk"].as<std::vector<double>>());

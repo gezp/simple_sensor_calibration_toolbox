@@ -28,4 +28,6 @@ struct ExtrinsicParam
   Eigen::Matrix4d transform;
 };
 
+std::string to_string(const ExtrinsicParam & param);
+
 }  // namespace ssct_common
