@@ -30,6 +30,7 @@ ssct_interfaces::msg::ExtrinsicParam to_ros_msg(const ExtrinsicParam & param)
   msg.frame_id = param.frame_id;
   msg.child_frame_id = param.child_frame_id;
   msg.transform = to_transform_msg(param.transform);
+  msg.time_offset = param.time_offset;
   return msg;
 }
 
@@ -53,6 +54,7 @@ bool from_ros_msg(const ssct_interfaces::msg::ExtrinsicParam & msg, ExtrinsicPar
   param.transform(0, 3) = msg.transform.translation.x;
   param.transform(1, 3) = msg.transform.translation.y;
   param.transform(2, 3) = msg.transform.translation.z;
+  param.time_offset = msg.time_offset;
   return true;
 }
 

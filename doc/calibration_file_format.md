@@ -28,16 +28,18 @@ imus:
         gyro_noise_density: [1.87e-04, 1.87e-04, 1.87e-04]
         gyro_random_walk: [2.66e-05, 2.66e-05, 2.66e-05]
 transforms:
-    transform1:
+    camera1_tf_lidar1:
         frame_id: camera1
         child_frame_id: lidar1
         translation: [0.07008565, -0.01771023, 0.00399246]
         rotation_xyzw: [0.0, 0.0, 0.0, 1.0]
-    transform2:
+        time_offset: 0.001
+    lidar1_tf_lidar2:
         frame_id: lidar1
         child_frame_id: lidar2
         translation: [0.07008565, -0.01771023, 0.00399246]
         rotation_xyzw: [0.0, 0.0, 0.0, 1.0]
+        time_offset: 0.0
 ```
 
 ## 相机内参说明
@@ -102,13 +104,14 @@ random_walk和noise_density是随机误差（不确定性误差）模型参数�
 
 ## 传感器外参说明
 
-传感器的外参包括以下四个量
+传感器的外参包括以下字段
 
 * frame_id：传感器的frame id
 * child_frame_id：另一个传感器的frame id
 * translation：外参坐标变换中的平移部分
 * rotation：外参坐标变换中的旋转部分，采用3x3旋转矩阵表示，按行优先展开为9个元素
 * rotation_xyzw：外参坐标变换中的旋转部分，采用四元数表示，顺序为`[x,y,z,w]`
+* time_offset：时间偏移，单位为秒，满足 `t_child = t_frame + time_offset`，即frame传感器时间戳加上time_offset得到对应的child传感器时间戳，正值表示frame传感器时间戳滞后。保存时始终输出，读取时缺省为0
 
 读取时若同时存在`rotation`和`rotation_xyzw`，优先使用`rotation_xyzw`；保存结果只写`rotation_xyzw`。
 

@@ -35,7 +35,8 @@ std::string to_string(const ExtrinsicParam & param)
          << param.transform(2, 3) << "]\n";
   stream << "rotation_xyzw: ["
          << quaternion.x() << ", " << quaternion.y() << ", "
-         << quaternion.z() << ", " << quaternion.w() << "]";
+         << quaternion.z() << ", " << quaternion.w() << "]\n";
+  stream << "time_offset: " << param.time_offset;
   return stream.str();
 }
 

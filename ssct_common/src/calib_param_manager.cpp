@@ -216,18 +216,17 @@ bool CalibParamManager::save(const std::string & file)
   }
   if (!extrinsic_params_.empty()) {
     ofs << "transforms:" << std::endl;
-    int cnt = 1;
     for (auto & [key, param] : extrinsic_params_) {
       auto t = param.transform.block<3, 1>(0, 3);
       std::vector<double> translation{t.x(), t.y(), t.z()};
       auto q = Eigen::Quaterniond(param.transform.block<3, 3>(0, 0));
       std::vector<double> rotation_xyzw{q.x(), q.y(), q.z(), q.w()};
-      ofs << "    transform" << cnt << ":" << std::endl;
+      ofs << "    " << key << ":" << std::endl;
       ofs << "        frame_id: " << param.frame_id << std::endl;
       ofs << "        child_frame_id: " << param.child_frame_id << std::endl;
       ofs << "        translation: " << to_string(translation) << std::endl;
       ofs << "        rotation_xyzw: " << to_string(rotation_xyzw) << std::endl;
-      cnt++;
+      ofs << "        time_offset: " << param.time_offset << std::endl;
     }
   }
   ofs << std::endl;
@@ -323,7 +322,14 @@ bool CalibParamManager::load(const std::string & file)
           Eigen::Matrix<double, 3, 3, Eigen::RowMajor> rotation(r.data());
           transform.block<3, 3>(0, 0) = rotation;
         }
-        add_extrinsic_param(frame_id, child_frame_id, transform);
+        ExtrinsicParam param;
+        param.frame_id = frame_id;
+        param.child_frame_id = child_frame_id;
+        param.transform = transform;
+        if (transform_node["time_offset"].IsDefined()) {
+          param.time_offset = transform_node["time_offset"].as<double>();
+        }
+        add_extrinsic_param(param);
       } catch (std::exception & e) {
         error_message_ = std::string("invalid transform [") + key + "]";
         return false;

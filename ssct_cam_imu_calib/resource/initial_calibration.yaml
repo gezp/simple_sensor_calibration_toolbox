@@ -1,0 +1,32 @@
+# Camera intrinsic, IMU intrinsic and optional initial extrinsic.
+# Copy the camera intrinsic result produced by ssct_camera_intrinsic_calib.
+cameras:
+    camera1:
+        frame_id: camera
+        height: 480
+        width: 640
+        type: pinhole_radtan
+        intrinsics: [435.124, 434.289, 305.101, 237.542]
+        distortion_coeffs: [0.0149351, 0.0405665, -0.00101619, -0.00544614, -0.0745861]
+
+imus:
+    imu1:
+        frame_id: imu
+        accel_matrix: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+        accel_bias: [0, 0, 0]
+        accel_noise_density: [0.0080939, 0.0085957, 0.0109728]
+        accel_random_walk: [0.000433, 0.000433, 0.000433]
+        gyro_matrix: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+        gyro_bias: [0, 0, 0]
+        gyro_noise_density: [0.000794644, 0.000790375, 0.000775061]
+        gyro_random_walk: [2.66e-05, 2.66e-05, 2.66e-05]
+
+# Optional initial guess used as the optimization initial value.
+# T_camera_imu maps IMU coordinates to camera coordinates.
+# transforms:
+#     camera_tf_imu:
+#         frame_id: camera
+#         child_frame_id: imu
+#         translation: [0.0, 0.0, 0.0]
+#         rotation_xyzw: [0.0, 0.0, 0.0, 1.0]
+#         time_offset: 0.0

@@ -7,7 +7,7 @@ cameras:
         intrinsics: [2109.75, 2071.72, 949.828, 576.237]
         distortion_coeffs: [-0.108144, 0.138668, -0.003797, -0.004841, 0.0]
 transforms:
-    transform1:
+    center_camera_tf_top_center_lidar:
         frame_id: center_camera
         child_frame_id: top_center_lidar
         translation: [-0.0322306, -0.352079, -0.574468]

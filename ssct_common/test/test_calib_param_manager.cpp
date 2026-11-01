@@ -37,16 +37,18 @@ TEST(CalibParamManager, load_rotation_matrix)
   write_file(
     path,
     "transforms:\n"
-    "    transform1:\n"
+    "    a_tf_b:\n"
     "        frame_id: a\n"
     "        child_frame_id: b\n"
     "        translation: [1, 2, 3]\n"
-    "        rotation: [0, -1, 0, 1, 0, 0, 0, 0, 1]\n");
+    "        rotation: [0, -1, 0, 1, 0, 0, 0, 0, 1]\n"
+    "        time_offset: 0.25\n");
   CalibParamManager manager;
   ASSERT_TRUE(manager.load(path));
   std::remove(path.c_str());
   ExtrinsicParam param;
   ASSERT_TRUE(manager.get_extrinsic_param("a", "b", param));
+  EXPECT_NEAR(param.time_offset, 0.25, 1e-9);
   EXPECT_NEAR(param.transform(0, 3), 1.0, 1e-9);
   EXPECT_NEAR(param.transform(1, 3), 2.0, 1e-9);
   EXPECT_NEAR(param.transform(2, 3), 3.0, 1e-9);
@@ -62,7 +64,7 @@ TEST(CalibParamManager, prefer_rotation_xyzw)
   write_file(
     path,
     "transforms:\n"
-    "    transform1:\n"
+    "    a_tf_b:\n"
     "        frame_id: a\n"
     "        child_frame_id: b\n"
     "        translation: [0, 0, 0]\n"
@@ -83,15 +85,22 @@ TEST(CalibParamManager, save_rotation_xyzw_only)
 {
   std::string path = "test_save_rotation.yaml";
   CalibParamManager manager;
-  Eigen::Matrix4d transform = Eigen::Matrix4d::Identity();
-  manager.add_extrinsic_param("a", "b", transform);
+  ExtrinsicParam param;
+  param.frame_id = "a";
+  param.child_frame_id = "b";
+  param.time_offset = 0.25;
+  manager.add_extrinsic_param(param);
   ASSERT_TRUE(manager.save(path));
   std::ifstream ifs(path);
   std::string content((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
   ifs.close();
   std::remove(path.c_str());
+  EXPECT_NE(content.find("transforms:"), std::string::npos);
+  EXPECT_EQ(content.find("extrinsics:"), std::string::npos);
+  EXPECT_NE(content.find("a_tf_b:"), std::string::npos);
   EXPECT_NE(content.find("rotation_xyzw:"), std::string::npos);
   EXPECT_EQ(content.find("rotation:"), std::string::npos);
+  EXPECT_NE(content.find("time_offset: 0.25"), std::string::npos);
 }
 
 TEST(CalibParamManager, camera_model_aliases_and_coeff_counts)
