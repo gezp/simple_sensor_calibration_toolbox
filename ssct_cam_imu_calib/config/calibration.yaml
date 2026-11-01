@@ -1,0 +1,84 @@
+# calibrator_type: handeye_calibrator | kalibr_calibrator
+#   handeye_calibrator: A * X = X * B hand-eye calibration from IMU-integrated
+#   relative motions between still segments.
+#   kalibr_calibrator: Kalibr-style continuous-time batch optimization with a
+#   B-spline pose trajectory and direct IMU gyro/accel residuals.
+# Each calibrator reads only its own section below.
+calibrator_type: kalibr_calibrator
+
+handeye_calibrator:
+  # process at most one image per this interval (seconds)
+  min_image_interval: 0.05
+  # two consecutive still segments form a pair only when their board
+  # detections are less than this many seconds apart
+  max_pair_interval: 5.0
+  # minimum number of valid static A->B pairs
+  min_pairs: 6
+  # minimum rotation between two still poses; pairs below this are dropped
+  min_rotation_deg: 5.0
+  # ChArUco/gridboard target and ArUco detector parameters. For gridboard use:
+  #   type: gridboard
+  #   markers_x: 5
+  #   markers_y: 7
+  #   marker_length: 0.04
+  #   marker_separation: 0.01
+  aruco_detector:
+    type: charuco
+    squares_x: 6
+    squares_y: 8
+    square_length: 0.035
+    marker_length: 0.025
+    dictionary: DICT_5X5_1000
+    min_corners: 12
+    max_reprojection_error: 2.0
+    min_marker_perimeter_rate: 0.01
+    max_marker_perimeter_rate: 4.0
+    polygonal_approx_accuracy_rate: 0.05
+  # sliding-window still segments used to build A->B pairs; each segment's mean
+  # gyro/accel are the gyro bias and gravity prior of pairs starting there
+  static_imu_collector:
+    window: 0.5                # seconds
+    gyro_std: 0.02             # rad/s
+    accel_std: 0.2             # m/s^2
+    gravity_tolerance: 0.5     # m/s^2, ||accel| - g|
+    min_duration: 0.5          # minimum reported segment length, seconds
+
+  optimizer:
+    # maximum rotation consistency error (rad), lower is better
+    max_score: 0.1
+    max_pairs: 200
+
+kalibr_calibrator:
+  aruco_detector:
+    type: charuco
+    squares_x: 6
+    squares_y: 8
+    square_length: 0.035
+    marker_length: 0.025
+    dictionary: DICT_5X5_1000
+    min_corners: 12
+    max_reprojection_error: 2.0
+    min_marker_perimeter_rate: 0.01
+    max_marker_perimeter_rate: 4.0
+    polygonal_approx_accuracy_rate: 0.05
+  min_image_interval: 0.05
+  min_collection_duration: 60.0
+  # minimum number of valid board observations
+  min_keyframes: 30
+  # minimum board rotation span required to observe the extrinsic
+  min_rotation_deg: 10.0
+  optimizer:
+    max_iterations: 200
+    # Continuous-time pose spline knot spacing (seconds).
+    spline_knot_spacing: 0.02
+    reprojection_sigma_px: 1.0
+    max_reprojection_rms: 2.0
+    gyro_bias_sigma: 0.002
+    accel_bias_sigma: 0.5
+    time_offset_sigma: 0.05
+    max_time_offset: 0.1
+    gravity_sigma: 0.5
+    # Camera and IMU are expected to share the ROS clock. Enable only when the
+    # sensors are known to be time offset; it needs high-rate images to converge.
+    estimate_time_offset: true
+    estimate_gravity: true

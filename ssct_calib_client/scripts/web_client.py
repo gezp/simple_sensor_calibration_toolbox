@@ -91,6 +91,7 @@ MODES = [
     {'id': 'generic_calib', 'url': '/static/modes/generic_calib/index.js'},
     {'id': 'camera_intrinsic_calib', 'url': '/static/modes/camera_intrinsic_calib/index.js'},
     {'id': 'imu_intrinsic_calib', 'url': '/static/modes/imu_intrinsic_calib/index.js'},
+    {'id': 'cam_imu_calib', 'url': '/static/modes/cam_imu_calib/index.js'},
     {'id': 'lidar_cam_manual_calib', 'url': '/static/modes/lidar_cam_manual_calib/index.js'},
     {'id': 'lidar_lidar_manual_calib', 'url': '/static/modes/lidar_lidar_manual_calib/index.js'},
 ]
@@ -139,6 +140,7 @@ def params_dict(msg):
                     e.transform.rotation.z,
                     e.transform.rotation.w,
                 ],
+                'time_offset': float(e.time_offset),
             }
             for e in msg.extrinsic_params
         ],

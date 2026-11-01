@@ -4,7 +4,7 @@ calibrator_type: opencv_calibrator
 chessboard_detector:
   cols: 11
   rows: 7
-  size: 0.0326
+  size: 0.033
 image_picker:
   rows: 3
   cols: 3

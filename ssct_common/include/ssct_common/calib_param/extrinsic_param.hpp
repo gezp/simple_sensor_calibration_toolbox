@@ -25,7 +25,9 @@ struct ExtrinsicParam
 {
   std::string frame_id;
   std::string child_frame_id;
-  Eigen::Matrix4d transform;
+  Eigen::Matrix4d transform{Eigen::Matrix4d::Identity()};
+  // t_child = t_frame + time_offset
+  double time_offset{0.0};
 };
 
 std::string to_string(const ExtrinsicParam & param);
