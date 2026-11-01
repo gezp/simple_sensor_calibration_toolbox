@@ -14,12 +14,13 @@
 
 #include "ssct_cam_imu_calib/handeye_calib/handeye_optimizer.hpp"
 
+#include <Eigen/Dense>
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
 #include <sstream>
 
-#include <Eigen/Dense>
 #include <sophus/so3.hpp>
 
 #include "ssct_cam_imu_calib/math_utils.hpp"

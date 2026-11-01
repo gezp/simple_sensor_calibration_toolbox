@@ -93,7 +93,7 @@ bool sample_anchor(
   } else {
     right = static_cast<size_t>(std::lower_bound(
       anchors.begin(), anchors.end(), time,
-      [](const PoseAnchor & anchor, double value) {return anchor.time < value;}) -
+        [](const PoseAnchor & anchor, double value) {return anchor.time < value;}) -
       anchors.begin());
   }
   const PoseAnchor & left_anchor = anchors[right - 1];
